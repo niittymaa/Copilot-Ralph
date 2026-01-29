@@ -27,7 +27,6 @@ Ralph runs AI coding agents in a continuous loop—reading specs, creating plans
 > - 🔄 **High token consumption** - Each iteration calls AI models (can be expensive)
 > - ⏱️ **Long-running sessions** - Complex projects may need dozens of iterations
 > - 💵 **Cost can add up quickly** - Monitor your GitHub Copilot usage and billing
-> - 🎯 **Use `-MaxIterations`** to limit costs while testing
 >
 > Estimate: A typical project might use 20-50 iterations. Each iteration consumes tokens equivalent to a full AI conversation. Plan accordingly!
 
