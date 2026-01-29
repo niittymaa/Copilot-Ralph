@@ -143,6 +143,24 @@ param(
 $ErrorActionPreference = 'Stop'
 
 # ═══════════════════════════════════════════════════════════════
+#                     VERSION CHECK
+# ═══════════════════════════════════════════════════════════════
+
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+    Write-Host ""
+    Write-Host "  ERROR: Ralph requires PowerShell 7.0 or higher" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "  You are running: PowerShell $($PSVersionTable.PSVersion)" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "  Solutions:" -ForegroundColor Cyan
+    Write-Host "    1. Run from PowerShell 7:  pwsh -File $($MyInvocation.MyCommand.Path)"
+    Write-Host "    2. Open 'PowerShell 7' or 'pwsh' from Start menu"
+    Write-Host "    3. Install PowerShell 7:   winget install Microsoft.PowerShell"
+    Write-Host ""
+    exit 1
+}
+
+# ═══════════════════════════════════════════════════════════════
 #                     PATH RESOLUTION
 # ═══════════════════════════════════════════════════════════════
 
