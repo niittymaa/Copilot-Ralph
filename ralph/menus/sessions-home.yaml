@@ -1,0 +1,34 @@
+---
+id: sessions-home
+title: "🏠 RALPH"
+description: AI-Powered Autonomous Coding Agent
+color: Magenta
+show_back: false
+show_quit: true
+---
+
+# Main home screen - Session management only
+# Sessions are listed dynamically by the menu system
+
+# Static items after dynamic session list
+
+- key: N
+  label: "🆕 New session"
+  action: new-session
+  description: Create a new session
+  color: Green
+
+- key: D
+  label: "🗑️  Delete session"
+  action: delete-session
+  description: Remove a session
+  color: Yellow
+  condition: has_sessions
+
+- separator: true
+
+- key: U
+  label: "📦 Update Ralph"
+  action: update-ralph
+  description: Check for and apply updates from upstream
+  color: Cyan

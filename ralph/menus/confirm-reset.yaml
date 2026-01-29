@@ -1,0 +1,19 @@
+---
+id: confirm-reset
+title: CONFIRM RESET
+description: This will reset your implementation plan and progress
+color: Yellow
+show_back: false
+show_quit: false
+---
+
+- key: Y
+  label: Yes, reset plan and progress
+  action: confirm
+  description: Your specs in specs/*.md will NOT be deleted
+  color: Yellow
+
+- key: N
+  label: No, keep current progress
+  action: cancel
+  color: Green

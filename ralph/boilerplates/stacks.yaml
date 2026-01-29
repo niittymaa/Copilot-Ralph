@@ -1,0 +1,795 @@
+# ═══════════════════════════════════════════════════════════════
+# Tech Stack Presets for Project Boilerplate Wizard
+# ═══════════════════════════════════════════════════════════════
+# Pre-configured combinations of technologies for common use cases
+# Each stack includes: framework, UI, build tools, testing, etc.
+
+stacks:
+  # ─────────────────────────────────────────────────────────────
+  # WEB STACKS
+  # ─────────────────────────────────────────────────────────────
+  
+  - id: html-css-js
+    name: HTML/CSS/JavaScript (Vanilla)
+    description: Pure web fundamentals - no framework
+    platforms: [web]
+    category: Beginner
+    icon: 📄
+    technologies:
+      core: [html5, css3, javascript]
+      build: [vite]
+      testing: [vitest]
+    hello_world:
+      title: Interactive Landing Page
+      description: Create a responsive landing page with a dark/light theme toggle, smooth scroll navigation, and a contact form with validation.
+      success_criteria:
+        - Responsive design works on mobile and desktop
+        - Theme toggle persists in localStorage
+        - Form validates email and required fields
+        - Smooth scroll to sections works
+
+  - id: react-typescript
+    name: React + TypeScript
+    description: Modern React with TypeScript and Vite
+    platforms: [web, fullstack]
+    category: Popular
+    icon: ⚛️
+    technologies:
+      core: [react, typescript]
+      ui: [tailwindcss]
+      build: [vite]
+      testing: [vitest, react-testing-library]
+      linting: [eslint, prettier]
+    hello_world:
+      title: Task Manager App
+      description: Create a todo application with add, complete, delete, and filter functionality. Uses React hooks and localStorage for persistence.
+      success_criteria:
+        - Add new tasks with Enter key
+        - Toggle task completion
+        - Delete tasks
+        - Filter by All/Active/Completed
+        - Persists to localStorage
+
+  - id: vue-typescript
+    name: Vue 3 + TypeScript
+    description: Vue 3 Composition API with TypeScript
+    platforms: [web, fullstack]
+    category: Popular
+    icon: 💚
+    technologies:
+      core: [vue3, typescript]
+      ui: [tailwindcss]
+      build: [vite]
+      testing: [vitest, vue-test-utils]
+      linting: [eslint, prettier]
+    hello_world:
+      title: Notes Application
+      description: Create a markdown notes app with create, edit, delete, and search. Uses Vue 3 Composition API with reactive state.
+      success_criteria:
+        - Create and edit notes with markdown preview
+        - Delete notes with confirmation
+        - Search notes by title/content
+        - Persists to localStorage
+
+  - id: nextjs
+    name: Next.js (React Full-Stack)
+    description: React framework with SSR, API routes, and app router
+    platforms: [web, fullstack]
+    category: Popular
+    icon: ▲
+    technologies:
+      core: [nextjs, react, typescript]
+      ui: [tailwindcss]
+      testing: [jest, react-testing-library]
+      linting: [eslint, prettier]
+    hello_world:
+      title: Blog with API
+      description: Create a simple blog with posts list, individual post pages, and an API endpoint. Uses App Router and Server Components.
+      success_criteria:
+        - Home page lists all posts
+        - Dynamic route for individual posts
+        - API route returns posts as JSON
+        - Static generation for performance
+
+  - id: svelte-kit
+    name: SvelteKit
+    description: Svelte framework with SSR and file-based routing
+    platforms: [web, fullstack]
+    category: Modern
+    icon: 🔥
+    technologies:
+      core: [sveltekit, typescript]
+      ui: [tailwindcss]
+      testing: [vitest, playwright]
+      linting: [eslint, prettier]
+    hello_world:
+      title: Weather Dashboard
+      description: Create a weather app that fetches data from a free API, displays current conditions, and allows searching by city.
+      success_criteria:
+        - Search for cities
+        - Display current weather
+        - Show 5-day forecast
+        - Loading and error states
+
+  - id: astro
+    name: Astro (Static Sites)
+    description: Content-focused static site generator
+    platforms: [web]
+    category: Modern
+    icon: 🚀
+    technologies:
+      core: [astro, typescript]
+      ui: [tailwindcss]
+      testing: [vitest]
+    hello_world:
+      title: Portfolio Website
+      description: Create a personal portfolio with home, projects, and contact pages. Uses Astro's content collections.
+      success_criteria:
+        - Multi-page navigation
+        - Projects page with grid layout
+        - Contact form
+        - Fast static build
+
+  # ─────────────────────────────────────────────────────────────
+  # API / BACKEND STACKS
+  # ─────────────────────────────────────────────────────────────
+
+  - id: node-express
+    name: Node.js + Express
+    description: Classic Node.js REST API with Express
+    platforms: [api, fullstack]
+    category: Popular
+    icon: 🟢
+    technologies:
+      core: [nodejs, express, typescript]
+      database: [sqlite]
+      testing: [jest, supertest]
+      linting: [eslint, prettier]
+    hello_world:
+      title: RESTful CRUD API
+      description: Create a REST API for managing items with GET, POST, PUT, DELETE endpoints, input validation, and SQLite storage.
+      success_criteria:
+        - CRUD endpoints for /api/items
+        - Input validation with error messages
+        - SQLite database persistence
+        - Proper HTTP status codes
+
+  - id: fastapi
+    name: Python + FastAPI
+    description: Modern Python API with automatic OpenAPI docs
+    platforms: [api, fullstack]
+    category: Popular
+    icon: 🐍
+    technologies:
+      core: [python, fastapi]
+      database: [sqlite]
+      testing: [pytest]
+      linting: [ruff, black]
+    hello_world:
+      title: API with Auto-Docs
+      description: Create a FastAPI service with CRUD operations, Pydantic models, and automatic Swagger documentation.
+      success_criteria:
+        - CRUD endpoints working
+        - Pydantic validation
+        - OpenAPI docs at /docs
+        - SQLite persistence
+
+  - id: django-rest
+    name: Django REST Framework
+    description: Full-featured Python web framework with REST API
+    platforms: [api, fullstack]
+    category: Popular
+    icon: 🎸
+    technologies:
+      core: [python, django, drf]
+      database: [sqlite]
+      testing: [pytest]
+      linting: [ruff, black]
+    hello_world:
+      title: Django API with Admin
+      description: Create a Django REST API with model, serializer, viewset, and admin interface for managing records.
+      success_criteria:
+        - REST API endpoints
+        - Django admin working
+        - Database migrations
+        - Authentication ready
+
+  - id: go-api
+    name: Go + Chi/Gin
+    description: High-performance Go API with routing
+    platforms: [api]
+    category: Performance
+    icon: 🔵
+    technologies:
+      core: [go, chi]
+      database: [sqlite]
+      testing: [go-testing]
+    hello_world:
+      title: Go REST Service
+      description: Create a fast Go API with Chi router, JSON handling, and SQLite for simple data persistence.
+      success_criteria:
+        - CRUD endpoints
+        - JSON request/response
+        - SQLite storage
+        - Proper error handling
+
+  - id: dotnet-webapi
+    name: .NET Web API
+    description: C# ASP.NET Core Web API
+    platforms: [api, fullstack]
+    category: Enterprise
+    icon: 🟣
+    technologies:
+      core: [dotnet, csharp, aspnetcore]
+      database: [sqlite]
+      testing: [xunit]
+    hello_world:
+      title: .NET REST API
+      description: Create an ASP.NET Core Web API with controllers, Entity Framework Core, and Swagger documentation.
+      success_criteria:
+        - CRUD controller
+        - EF Core with SQLite
+        - Swagger UI
+        - Dependency injection
+
+  # ─────────────────────────────────────────────────────────────
+  # CLI STACKS
+  # ─────────────────────────────────────────────────────────────
+
+  - id: node-cli
+    name: Node.js CLI Tool
+    description: Command-line application with Commander.js
+    platforms: [cli]
+    category: Popular
+    icon: 📟
+    technologies:
+      core: [nodejs, typescript]
+      cli: [commander, inquirer]
+      testing: [vitest]
+      linting: [eslint, prettier]
+    hello_world:
+      title: File Organizer CLI
+      description: Create a CLI tool that organizes files in a directory by extension into categorized folders.
+      success_criteria:
+        - Parse command line arguments
+        - Interactive prompts for options
+        - Move files by extension
+        - Dry-run mode available
+
+  - id: python-cli
+    name: Python CLI Tool
+    description: Command-line application with Click/Typer
+    platforms: [cli]
+    category: Popular
+    icon: 🐍
+    technologies:
+      core: [python]
+      cli: [typer, rich]
+      testing: [pytest]
+      linting: [ruff, black]
+    hello_world:
+      title: System Info CLI
+      description: Create a CLI tool that displays system information with colorful output using Rich library.
+      success_criteria:
+        - Display CPU, memory, disk info
+        - Colorful formatted output
+        - --json flag for machine output
+        - Help text for all commands
+
+  - id: go-cli
+    name: Go CLI Tool
+    description: Fast CLI application with Cobra
+    platforms: [cli]
+    category: Performance
+    icon: 🔵
+    technologies:
+      core: [go]
+      cli: [cobra]
+      testing: [go-testing]
+    hello_world:
+      title: JSON Formatter CLI
+      description: Create a CLI tool that formats, validates, and queries JSON files with jq-like syntax.
+      success_criteria:
+        - Format JSON with indentation
+        - Validate JSON syntax
+        - Query with dot notation
+        - Read from file or stdin
+
+  - id: rust-cli
+    name: Rust CLI Tool
+    description: Fast, safe CLI with Clap
+    platforms: [cli]
+    category: Performance
+    icon: 🦀
+    technologies:
+      core: [rust]
+      cli: [clap]
+      testing: [rust-testing]
+    hello_world:
+      title: Text Search CLI
+      description: Create a grep-like CLI tool that searches files for patterns with regex support.
+      success_criteria:
+        - Search files recursively
+        - Regex pattern matching
+        - Colored output
+        - Line number display
+
+  # ─────────────────────────────────────────────────────────────
+  # DESKTOP STACKS
+  # ─────────────────────────────────────────────────────────────
+
+  - id: electron-react
+    name: Electron + React
+    description: Cross-platform desktop app with web technologies
+    platforms: [desktop]
+    category: Popular
+    icon: ⚡
+    technologies:
+      core: [electron, react, typescript]
+      ui: [tailwindcss]
+      build: [vite]
+      testing: [vitest]
+    hello_world:
+      title: Markdown Editor
+      description: Create a desktop markdown editor with live preview, file save/open, and syntax highlighting.
+      success_criteria:
+        - Edit markdown with syntax highlighting
+        - Live preview panel
+        - Save/Open files from disk
+        - Remembers last opened file
+
+  - id: tauri-react
+    name: Tauri + React
+    description: Lightweight desktop app with Rust backend
+    platforms: [desktop]
+    category: Modern
+    icon: 🦀
+    technologies:
+      core: [tauri, react, typescript, rust]
+      ui: [tailwindcss]
+      build: [vite]
+      testing: [vitest]
+    hello_world:
+      title: System Monitor
+      description: Create a desktop app that displays real-time CPU, memory, and disk usage with graphs.
+      success_criteria:
+        - Real-time system metrics
+        - Historical graphs
+        - System tray icon
+        - Cross-platform builds
+
+  - id: python-tkinter
+    name: Python + Tkinter
+    description: Simple Python desktop GUI
+    platforms: [desktop]
+    category: Beginner
+    icon: 🐍
+    technologies:
+      core: [python, tkinter]
+      testing: [pytest]
+    hello_world:
+      title: Calculator App
+      description: Create a desktop calculator with basic operations, keyboard input, and history.
+      success_criteria:
+        - Basic math operations
+        - Keyboard shortcuts work
+        - Calculation history
+        - Clear and backspace
+
+  - id: dotnet-wpf
+    name: .NET WPF/MAUI
+    description: Windows desktop or cross-platform .NET app
+    platforms: [desktop, mobile]
+    category: Enterprise
+    icon: 🟣
+    technologies:
+      core: [dotnet, csharp, maui]
+      testing: [xunit]
+    hello_world:
+      title: Note Taking App
+      description: Create a cross-platform note app with MAUI supporting rich text and categories.
+      success_criteria:
+        - Create/edit/delete notes
+        - Categorize notes
+        - Search functionality
+        - Works on Windows/Mac/Mobile
+
+  # ─────────────────────────────────────────────────────────────
+  # MOBILE STACKS
+  # ─────────────────────────────────────────────────────────────
+
+  - id: react-native
+    name: React Native (Expo)
+    description: Cross-platform mobile with React
+    platforms: [mobile]
+    category: Popular
+    icon: 📱
+    technologies:
+      core: [react-native, expo, typescript]
+      testing: [jest]
+      linting: [eslint, prettier]
+    hello_world:
+      title: Habit Tracker
+      description: Create a mobile app to track daily habits with streaks, reminders, and statistics.
+      success_criteria:
+        - Add/remove habits
+        - Mark daily completion
+        - Streak counter
+        - Local notifications
+
+  - id: flutter
+    name: Flutter (Dart)
+    description: Google's cross-platform mobile framework
+    platforms: [mobile, desktop]
+    category: Popular
+    icon: 💙
+    technologies:
+      core: [flutter, dart]
+      testing: [flutter-test]
+    hello_world:
+      title: Recipe App
+      description: Create a mobile recipe app with categories, search, and favorites stored locally.
+      success_criteria:
+        - Browse recipes by category
+        - Search recipes
+        - Save favorites
+        - Offline support
+
+  # ─────────────────────────────────────────────────────────────
+  # LIBRARY / PACKAGE STACKS
+  # ─────────────────────────────────────────────────────────────
+
+  - id: npm-package
+    name: npm Package (TypeScript)
+    description: Reusable JavaScript/TypeScript library
+    platforms: [library]
+    category: Popular
+    icon: 📦
+    technologies:
+      core: [typescript, nodejs]
+      build: [tsup]
+      testing: [vitest]
+      linting: [eslint, prettier]
+    hello_world:
+      title: Utility Library
+      description: Create an npm package with useful utility functions, proper TypeScript types, and documentation.
+      success_criteria:
+        - Multiple utility functions
+        - Full TypeScript types
+        - ESM and CJS exports
+        - README with examples
+
+  - id: pypi-package
+    name: PyPI Package (Python)
+    description: Reusable Python library
+    platforms: [library]
+    category: Popular
+    icon: 🐍
+    technologies:
+      core: [python]
+      build: [poetry]
+      testing: [pytest]
+      linting: [ruff, black]
+    hello_world:
+      title: Data Validation Library
+      description: Create a Python package for validating data structures with custom rules and error messages.
+      success_criteria:
+        - Validation decorators
+        - Custom rule definitions
+        - Clear error messages
+        - Type hints throughout
+
+  # ─────────────────────────────────────────────────────────────
+  # COMPANY-INSPIRED STACKS
+  # ─────────────────────────────────────────────────────────────
+  # Tech stacks inspired by major tech companies and platforms
+
+  - id: facebook-stack
+    name: Facebook/Meta Stack
+    description: React + GraphQL + Relay - Meta's open source stack
+    platforms: [web, fullstack]
+    category: Enterprise
+    icon: 📘
+    technologies:
+      core: [react, typescript, graphql]
+      ui: [tailwindcss]
+      api: [relay]
+      build: [vite]
+      testing: [jest, react-testing-library]
+      linting: [eslint, prettier]
+    hello_world:
+      title: Social Feed App
+      description: Create a news feed with posts, likes, comments using React and GraphQL with Relay for data fetching.
+      success_criteria:
+        - Post feed with infinite scroll
+        - Like and comment functionality
+        - GraphQL API with schema
+        - Relay data fragments
+        - Optimistic UI updates
+
+  - id: twitter-stack
+    name: X (Twitter) Stack
+    description: React + Node + Redis - Real-time social platform stack
+    platforms: [web, fullstack]
+    category: Enterprise
+    icon: 🐦
+    technologies:
+      core: [react, typescript, nodejs, express]
+      ui: [tailwindcss]
+      database: [postgresql, redis]
+      testing: [jest, supertest]
+      linting: [eslint, prettier]
+    hello_world:
+      title: Microblog Platform
+      description: Create a Twitter-like app with posts, follows, timeline, and real-time updates using WebSockets.
+      success_criteria:
+        - Post short messages (280 chars)
+        - Follow/unfollow users
+        - Real-time timeline updates
+        - Like and repost
+        - User profiles
+
+  - id: instagram-stack
+    name: Instagram Stack
+    description: React Native + Django + PostgreSQL - Photo sharing stack
+    platforms: [mobile, fullstack]
+    category: Enterprise
+    icon: 📷
+    technologies:
+      core: [react-native, expo, typescript, python, django]
+      database: [postgresql]
+      testing: [jest, pytest]
+      linting: [eslint, ruff]
+    hello_world:
+      title: Photo Sharing App
+      description: Create an Instagram-like mobile app with photo uploads, filters, feed, and user profiles.
+      success_criteria:
+        - Camera/gallery photo upload
+        - Basic image filters
+        - Photo feed with likes
+        - User profiles with grid
+        - Follow system
+
+  - id: reddit-stack
+    name: Reddit Stack
+    description: React + Python + PostgreSQL - Community discussion platform
+    platforms: [web, fullstack]
+    category: Enterprise
+    icon: 🤖
+    technologies:
+      core: [react, typescript, python, fastapi]
+      ui: [tailwindcss]
+      database: [postgresql, redis]
+      testing: [vitest, pytest]
+      linting: [eslint, ruff]
+    hello_world:
+      title: Community Forum
+      description: Create a Reddit-like forum with communities, posts, comments, and voting system.
+      success_criteria:
+        - Create/join communities
+        - Post text/links
+        - Nested comments
+        - Upvote/downvote system
+        - Sort by hot/new/top
+
+  - id: tinder-stack
+    name: Tinder Stack
+    description: React Native + Node + MongoDB - Swipe-based matching app
+    platforms: [mobile, fullstack]
+    category: Enterprise
+    icon: 🔥
+    technologies:
+      core: [react-native, expo, typescript, nodejs, express]
+      database: [mongodb]
+      testing: [jest]
+      linting: [eslint, prettier]
+    hello_world:
+      title: Swipe Matching App
+      description: Create a Tinder-like app with swipe gestures, matching algorithm, and real-time chat.
+      success_criteria:
+        - Swipe left/right gestures
+        - Match notifications
+        - User profiles with photos
+        - Real-time chat on match
+        - Location-based discovery
+
+  - id: discord-stack
+    name: Discord Stack
+    description: Electron + React + WebSocket - Real-time communication
+    platforms: [desktop, web, fullstack]
+    category: Enterprise
+    icon: 💬
+    technologies:
+      core: [electron, react, typescript, nodejs, express]
+      ui: [tailwindcss]
+      database: [postgresql, redis]
+      build: [vite]
+      testing: [vitest, jest]
+      linting: [eslint, prettier]
+    hello_world:
+      title: Chat Application
+      description: Create a Discord-like app with servers, channels, real-time messaging, and voice-ready architecture.
+      success_criteria:
+        - Create/join servers
+        - Text channels with real-time chat
+        - User presence indicators
+        - Message history
+        - Desktop notifications
+
+  - id: github-app-stack
+    name: GitHub App Stack
+    description: Node + Probot + GraphQL - GitHub integration platform
+    platforms: [api, fullstack]
+    category: Enterprise
+    icon: 🐙
+    technologies:
+      core: [nodejs, typescript, probot]
+      api: [graphql]
+      database: [postgresql]
+      testing: [jest]
+      linting: [eslint, prettier]
+    hello_world:
+      title: GitHub Bot
+      description: Create a GitHub App that automates workflows - auto-labels issues, welcomes contributors, and checks PRs.
+      success_criteria:
+        - GitHub App authentication
+        - Auto-label new issues
+        - Welcome first-time contributors
+        - PR checks with status API
+        - Webhook event handling
+
+  - id: spotify-stack
+    name: Spotify Stack
+    description: React + Python + PostgreSQL - Audio streaming platform
+    platforms: [web, fullstack]
+    category: Enterprise
+    icon: 🎵
+    technologies:
+      core: [react, typescript, python, fastapi]
+      ui: [tailwindcss]
+      database: [postgresql, redis]
+      testing: [vitest, pytest]
+      linting: [eslint, ruff]
+    hello_world:
+      title: Music Player App
+      description: Create a Spotify-like web app with playlists, audio player, search, and playback queue.
+      success_criteria:
+        - Audio playback with controls
+        - Create/edit playlists
+        - Search songs/artists
+        - Playback queue management
+        - Responsive player UI
+
+  - id: netflix-stack
+    name: Netflix Stack
+    description: React + Node + GraphQL - Video streaming platform
+    platforms: [web, fullstack]
+    category: Enterprise
+    icon: 🎬
+    technologies:
+      core: [react, typescript, nodejs, express, graphql]
+      ui: [tailwindcss]
+      database: [postgresql, redis]
+      testing: [jest, react-testing-library]
+      linting: [eslint, prettier]
+    hello_world:
+      title: Video Streaming App
+      description: Create a Netflix-like app with video catalog, playback, categories, and watchlist.
+      success_criteria:
+        - Video catalog with categories
+        - Video player with controls
+        - Continue watching feature
+        - User watchlist
+        - Responsive grid layout
+
+  - id: slack-stack
+    name: Slack Stack
+    description: Electron + React + WebSocket - Team communication
+    platforms: [desktop, web, fullstack]
+    category: Enterprise
+    icon: 💼
+    technologies:
+      core: [electron, react, typescript, nodejs, express]
+      ui: [tailwindcss]
+      database: [postgresql, redis]
+      build: [vite]
+      testing: [vitest]
+      linting: [eslint, prettier]
+    hello_world:
+      title: Team Messenger
+      description: Create a Slack-like app with workspaces, channels, DMs, and threaded conversations.
+      success_criteria:
+        - Workspace creation/joining
+        - Public/private channels
+        - Direct messages
+        - Message threads
+        - File sharing ready
+
+  - id: airbnb-stack
+    name: Airbnb Stack
+    description: React + Ruby on Rails + PostgreSQL - Marketplace platform
+    platforms: [web, fullstack]
+    category: Enterprise
+    icon: 🏠
+    technologies:
+      core: [react, typescript, nodejs, express]
+      ui: [tailwindcss]
+      database: [postgresql]
+      testing: [vitest, jest]
+      linting: [eslint, prettier]
+    hello_world:
+      title: Booking Marketplace
+      description: Create an Airbnb-like app with listings, search, booking calendar, and reviews.
+      success_criteria:
+        - Property listings with photos
+        - Search with filters
+        - Date availability calendar
+        - Booking flow
+        - Review system
+
+  - id: uber-stack
+    name: Uber Stack
+    description: React Native + Go + PostgreSQL - Location-based service
+    platforms: [mobile, fullstack]
+    category: Enterprise
+    icon: 🚗
+    technologies:
+      core: [react-native, expo, typescript, go]
+      database: [postgresql, redis]
+      testing: [jest, go-testing]
+      linting: [eslint]
+    hello_world:
+      title: Ride Request App
+      description: Create an Uber-like app with maps, location tracking, ride requests, and driver matching.
+      success_criteria:
+        - Map integration
+        - Location selection
+        - Ride request flow
+        - Driver matching simulation
+        - Real-time location updates
+
+  - id: notion-stack
+    name: Notion Stack
+    description: React + TypeScript + PostgreSQL - Collaborative workspace
+    platforms: [web, desktop, fullstack]
+    category: Enterprise
+    icon: 📝
+    technologies:
+      core: [react, typescript, nodejs, express]
+      ui: [tailwindcss]
+      database: [postgresql]
+      build: [vite]
+      testing: [vitest, playwright]
+      linting: [eslint, prettier]
+    hello_world:
+      title: Collaborative Workspace
+      description: Create a Notion-like app with pages, blocks, rich text editing, and real-time collaboration.
+      success_criteria:
+        - Block-based editor
+        - Multiple page types
+        - Rich text formatting
+        - Nested pages/blocks
+        - Real-time sync ready
+
+  - id: figma-stack
+    name: Figma Stack
+    description: React + WebGL/Canvas + WebSocket - Design collaboration
+    platforms: [web, fullstack]
+    category: Enterprise
+    icon: 🎨
+    technologies:
+      core: [react, typescript, nodejs, express]
+      ui: [tailwindcss]
+      database: [postgresql]
+      build: [vite]
+      testing: [vitest, playwright]
+      linting: [eslint, prettier]
+    hello_world:
+      title: Design Canvas App
+      description: Create a Figma-like app with canvas drawing, shapes, selection, and basic collaboration.
+      success_criteria:
+        - Canvas with zoom/pan
+        - Draw basic shapes
+        - Select and move objects
+        - Layers panel
+        - Real-time cursors ready

@@ -1,0 +1,13 @@
+---
+id: presets
+title: "📦 RALPH - PRESET SELECTION"
+description: Select a preset template to apply
+color: Cyan
+show_back: true
+show_quit: true
+---
+
+# Preset items are added dynamically from ralph/presets/*.md
+# Each preset is grouped by category and displayed with description
+
+# Home button is added programmatically

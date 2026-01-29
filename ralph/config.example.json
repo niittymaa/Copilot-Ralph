@@ -1,0 +1,9 @@
+{
+  "_comment": "Ralph Configuration - Copy this to config.json and edit",
+  "developer_mode": false,
+  "_developer_mode_help": "When true, screens won't be cleared between menus so you can scroll through history",
+  "verbose_mode": true,
+  "_verbose_mode_help": "When true, shows detailed output and debug information",
+  "venv_mode": "auto",
+  "_venv_mode_help": "Virtual environment mode: 'auto' (detect if needed), 'always' (always create), 'disabled' (never create, not recommended)"
+}

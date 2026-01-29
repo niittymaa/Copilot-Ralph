@@ -1,0 +1,53 @@
+---
+id: session
+title: "📂 SESSION: {{session_name}}"
+description: Configure session settings before starting
+color: Cyan
+show_back: true
+show_quit: false
+---
+
+# Session home screen - shown after selecting/creating a session
+# All settings are session-specific
+
+- key: Enter
+  label: "🚀 Start Ralph"
+  action: start
+  description: Begin building with current settings
+  color: Green
+
+- separator: true
+
+- key: R
+  label: "📚 References"
+  action: references
+  submenu: references
+  description: "{{references_summary}}"
+  color: White
+
+- key: S
+  label: "📝 Specs"
+  action: specs-settings
+  submenu: specs-settings
+  description: "{{specs_summary}}"
+  color: White
+
+- separator: true
+
+- key: M
+  label: "🤖 AI Model ({{current_model}})"
+  action: change-model
+  description: Change the AI model
+  color: Cyan
+
+- key: V
+  label: "📊 Verbose mode ({{verbose_status}})"
+  action: toggle-verbose
+  description: Show detailed output
+  color: Yellow
+
+- key: I
+  label: "🔄 Max iterations ({{max_iterations}})"
+  action: set-iterations
+  description: Set build iteration limit
+  color: White

@@ -1,0 +1,613 @@
+# ═══════════════════════════════════════════════════════════════
+# Individual Technologies for Custom Mode
+# ═══════════════════════════════════════════════════════════════
+# Used when user wants to pick technologies one by one
+# Grouped by category for easy selection
+
+categories:
+  - id: language
+    name: Programming Language
+    description: Primary language for the project
+    required: true
+    single_select: true
+
+  - id: framework
+    name: Framework
+    description: Application framework
+    required: false
+    single_select: true
+    depends_on: language
+
+  - id: ui
+    name: UI Framework / Styling
+    description: CSS framework or component library
+    required: false
+    single_select: false
+
+  - id: database
+    name: Database
+    description: Data storage solution
+    required: false
+    single_select: true
+
+  - id: testing
+    name: Testing Framework
+    description: Unit and integration testing
+    required: false
+    single_select: false
+
+  - id: build
+    name: Build Tools
+    description: Bundler, compiler, or build system
+    required: false
+    single_select: true
+
+  - id: linting
+    name: Linting & Formatting
+    description: Code quality tools
+    required: false
+    single_select: false
+
+technologies:
+  # ─────────────────────────────────────────────────────────────
+  # LANGUAGES
+  # ─────────────────────────────────────────────────────────────
+  
+  - id: javascript
+    name: JavaScript
+    description: Browser-native, runs everywhere. Most popular for web development.
+    category: language
+    platforms: [web, api, cli, desktop, mobile, library]
+    icon: 🟨
+    
+  - id: typescript
+    name: TypeScript
+    description: JavaScript with types. Catches errors at compile time, better IDE support.
+    category: language
+    platforms: [web, api, cli, desktop, mobile, library]
+    icon: 🔷
+    
+  - id: python
+    name: Python
+    description: Readable syntax. Dominant in AI/ML, data science, automation, and scripting.
+    category: language
+    platforms: [api, cli, desktop, library]
+    icon: 🐍
+    
+  - id: go
+    name: Go
+    description: Fast compilation, built-in concurrency. Used for cloud infrastructure and CLIs.
+    category: language
+    platforms: [api, cli, library]
+    icon: 🔵
+    
+  - id: rust
+    name: Rust
+    description: Memory-safe without garbage collection. Used for performance-critical systems.
+    category: language
+    platforms: [cli, desktop, library]
+    icon: 🦀
+    
+  - id: csharp
+    name: C#
+    description: Microsoft ecosystem. Enterprise apps, game dev (Unity), cross-platform with .NET.
+    category: language
+    platforms: [api, desktop, mobile, library]
+    icon: 🟣
+    
+  - id: dart
+    name: Dart
+    description: Google's language for Flutter. Compiles to native code for mobile and desktop.
+    category: language
+    platforms: [mobile, desktop]
+    icon: 💙
+    
+  - id: html5
+    name: HTML5
+    description: Markup language for web content. Foundation of all web pages.
+    category: language
+    platforms: [web]
+    icon: 📄
+
+  # ─────────────────────────────────────────────────────────────
+  # FRAMEWORKS
+  # ─────────────────────────────────────────────────────────────
+  
+  - id: react
+    name: React
+    description: Component-based UI library by Meta. Largest ecosystem, most job opportunities.
+    category: framework
+    languages: [javascript, typescript]
+    platforms: [web, fullstack]
+    icon: ⚛️
+    
+  - id: vue3
+    name: Vue 3
+    description: Progressive framework. Easier learning curve than React, great documentation.
+    category: framework
+    languages: [javascript, typescript]
+    platforms: [web, fullstack]
+    icon: 💚
+    
+  - id: nextjs
+    name: Next.js
+    description: React framework with SSR, API routes, file-based routing. Production-ready.
+    category: framework
+    languages: [typescript]
+    platforms: [web, fullstack]
+    icon: ▲
+    
+  - id: sveltekit
+    name: SvelteKit
+    description: Svelte framework with SSR. Compiles away framework code, smaller bundles.
+    category: framework
+    languages: [typescript]
+    platforms: [web, fullstack]
+    icon: 🔥
+    
+  - id: astro
+    name: Astro
+    description: Content-focused static sites. Ships zero JS by default, islands architecture.
+    category: framework
+    languages: [typescript]
+    platforms: [web]
+    icon: 🚀
+    
+  - id: express
+    name: Express.js
+    description: Minimal Node.js web framework. Most popular for REST APIs, huge middleware ecosystem.
+    category: framework
+    languages: [javascript, typescript]
+    platforms: [api, fullstack]
+    icon: 🟢
+    
+  - id: fastapi
+    name: FastAPI
+    description: Modern Python API framework. Auto-generates OpenAPI docs, async support, type hints.
+    category: framework
+    languages: [python]
+    platforms: [api]
+    icon: ⚡
+    
+  - id: django
+    name: Django
+    description: Batteries-included Python framework. Admin panel, ORM, auth built-in.
+    category: framework
+    languages: [python]
+    platforms: [api, fullstack]
+    icon: 🎸
+    
+  - id: flask
+    name: Flask
+    description: Lightweight Python microframework. Good for small APIs and prototypes.
+    category: framework
+    languages: [python]
+    platforms: [api]
+    icon: 🌶️
+    
+  - id: chi
+    name: Chi
+    description: Lightweight Go router. Idiomatic, composable middleware, stdlib compatible.
+    category: framework
+    languages: [go]
+    platforms: [api]
+    icon: 🔵
+    
+  - id: gin
+    name: Gin
+    description: Fast Go web framework. JSON validation, middleware, popular for REST APIs.
+    category: framework
+    languages: [go]
+    platforms: [api]
+    icon: 🔵
+    
+  - id: aspnetcore
+    name: ASP.NET Core
+    description: Microsoft's web framework. Enterprise-grade, cross-platform, great performance.
+    category: framework
+    languages: [csharp]
+    platforms: [api, fullstack]
+    icon: 🟣
+    
+  - id: electron
+    name: Electron
+    description: Desktop apps with web tech. Powers VS Code, Slack, Discord. Large bundle size.
+    category: framework
+    languages: [javascript, typescript]
+    platforms: [desktop]
+    icon: ⚡
+    
+  - id: tauri
+    name: Tauri
+    description: Lightweight Electron alternative. Rust backend, smaller bundles, better security.
+    category: framework
+    languages: [typescript, rust]
+    platforms: [desktop]
+    icon: 🦀
+    
+  - id: tkinter
+    name: Tkinter
+    description: Python's built-in GUI. No installation needed, good for simple desktop tools.
+    category: framework
+    languages: [python]
+    platforms: [desktop]
+    icon: 🖼️
+    
+  - id: maui
+    name: .NET MAUI
+    description: Microsoft's cross-platform UI. Single codebase for Windows, Mac, iOS, Android.
+    category: framework
+    languages: [csharp]
+    platforms: [desktop, mobile]
+    icon: 🟣
+    
+  - id: react-native
+    name: React Native
+    description: React for mobile apps. Native performance, code sharing with React web apps.
+    category: framework
+    languages: [typescript]
+    platforms: [mobile]
+    icon: 📱
+    
+  - id: expo
+    name: Expo
+    description: React Native toolchain. Simplifies development, OTA updates, managed workflow.
+    category: framework
+    languages: [typescript]
+    platforms: [mobile]
+    icon: 📱
+    
+  - id: flutter
+    name: Flutter
+    description: Google's UI toolkit. Single codebase for mobile, web, desktop. Own rendering engine.
+    category: framework
+    languages: [dart]
+    platforms: [mobile, desktop]
+    icon: 💙
+
+  # ─────────────────────────────────────────────────────────────
+  # UI FRAMEWORKS
+  # ─────────────────────────────────────────────────────────────
+  
+  - id: tailwindcss
+    name: Tailwind CSS
+    description: Utility-first CSS. Rapid prototyping, consistent design, highly customizable.
+    category: ui
+    platforms: [web, desktop, mobile]
+    icon: 🎨
+    
+  - id: css3
+    name: CSS3
+    description: Pure CSS without frameworks. Full control, no dependencies, smaller bundles.
+    category: ui
+    platforms: [web]
+    icon: 🎨
+    
+  - id: shadcn
+    name: shadcn/ui
+    description: Copy-paste React components. Built on Radix UI, customizable, accessible.
+    category: ui
+    platforms: [web]
+    icon: 🎨
+    
+  - id: mui
+    name: Material UI
+    description: Google Material Design for React. Comprehensive component library, theming.
+    category: ui
+    platforms: [web]
+    icon: 🎨
+    
+  - id: chakra
+    name: Chakra UI
+    description: Accessible React components. Good DX, built-in dark mode, composable.
+    category: ui
+    platforms: [web]
+    icon: ⚡
+    
+  - id: bootstrap
+    name: Bootstrap
+    description: Classic CSS framework. Responsive grid, pre-built components, jQuery optional.
+    category: ui
+    platforms: [web]
+    icon: 🅱️
+
+  # ─────────────────────────────────────────────────────────────
+  # DATABASES
+  # ─────────────────────────────────────────────────────────────
+  
+  - id: sqlite
+    name: SQLite
+    description: Embedded file-based database. Zero config, serverless, good for local apps.
+    category: database
+    platforms: [api, cli, desktop, mobile, fullstack]
+    icon: 🗄️
+    
+  - id: postgresql
+    name: PostgreSQL
+    description: Advanced open-source SQL. JSON support, extensible, production-grade.
+    category: database
+    platforms: [api, fullstack]
+    icon: 🐘
+    
+  - id: mongodb
+    name: MongoDB
+    description: Document database (NoSQL). Flexible schema, good for rapid prototyping.
+    category: database
+    platforms: [api, fullstack]
+    icon: 🍃
+    
+  - id: prisma
+    name: Prisma ORM
+    description: Type-safe Node.js ORM. Auto-generated queries, migrations, database browser.
+    category: database
+    platforms: [api, fullstack]
+    icon: 🔺
+    
+  - id: drizzle
+    name: Drizzle ORM
+    description: Lightweight TypeScript ORM. SQL-like syntax, no code generation, fast.
+    category: database
+    platforms: [api, fullstack]
+    icon: 💧
+
+  # ─────────────────────────────────────────────────────────────
+  # TESTING
+  # ─────────────────────────────────────────────────────────────
+  
+  - id: vitest
+    name: Vitest
+    description: Vite-native test runner. Fast, Jest-compatible API, ESM support.
+    category: testing
+    platforms: [web, api, cli, library]
+    icon: 🧪
+    
+  - id: jest
+    name: Jest
+    description: Meta's test framework. Snapshot testing, mocking, large ecosystem.
+    category: testing
+    platforms: [web, api, cli, library]
+    icon: 🃏
+    
+  - id: pytest
+    name: pytest
+    description: Python's most popular test framework. Fixtures, plugins, simple syntax.
+    category: testing
+    platforms: [api, cli, library]
+    icon: 🐍
+    
+  - id: go-testing
+    name: Go testing
+    description: Go's built-in test package. Table-driven tests, benchmarks, no dependencies.
+    category: testing
+    platforms: [api, cli, library]
+    icon: 🔵
+    
+  - id: rust-testing
+    name: Rust testing
+    description: Rust's built-in test framework. Doc tests, integration tests, benchmarks.
+    category: testing
+    platforms: [cli, library]
+    icon: 🦀
+    
+  - id: xunit
+    name: xUnit
+    description: .NET test framework. Modern design, parallel execution, extensible.
+    category: testing
+    platforms: [api, desktop, library]
+    icon: ✅
+    
+  - id: playwright
+    name: Playwright
+    description: Microsoft's E2E testing. Multi-browser, auto-wait, trace viewer.
+    category: testing
+    platforms: [web]
+    icon: 🎭
+    
+  - id: cypress
+    name: Cypress
+    description: E2E testing for web. Real browser testing, time travel debugging.
+    category: testing
+    platforms: [web]
+    icon: 🌲
+
+  # ─────────────────────────────────────────────────────────────
+  # BUILD TOOLS
+  # ─────────────────────────────────────────────────────────────
+  
+  - id: vite
+    name: Vite
+    description: Fast dev server and bundler. Instant HMR, native ESM, Rollup-based production.
+    category: build
+    platforms: [web, desktop, library]
+    icon: ⚡
+    
+  - id: webpack
+    name: Webpack
+    description: Mature bundler with huge ecosystem. Complex config, handles any asset type.
+    category: build
+    platforms: [web, library]
+    icon: 📦
+    
+  - id: tsup
+    name: tsup
+    description: TypeScript bundler powered by esbuild. Zero config, ESM/CJS output.
+    category: build
+    platforms: [library, cli]
+    icon: 📦
+    
+  - id: poetry
+    name: Poetry
+    description: Python dependency management. Lock files, virtual envs, publishing.
+    category: build
+    platforms: [api, cli, library]
+    icon: 📜
+    
+  - id: esbuild
+    name: esbuild
+    description: Extremely fast bundler (Go-based). 10-100x faster than alternatives.
+    category: build
+    platforms: [web, library, cli]
+    icon: ⚡
+
+  # ─────────────────────────────────────────────────────────────
+  # LINTING & FORMATTING
+  # ─────────────────────────────────────────────────────────────
+  
+  - id: eslint
+    name: ESLint
+    description: JavaScript/TypeScript linter. Customizable rules, auto-fix, plugin ecosystem.
+    category: linting
+    platforms: [web, api, cli, library]
+    icon: 🔍
+    
+  - id: prettier
+    name: Prettier
+    description: Opinionated code formatter. Consistent style, supports many languages.
+    category: linting
+    platforms: [web, api, cli, library]
+    icon: 💅
+    
+  - id: ruff
+    name: Ruff
+    description: Fast Python linter (Rust-based). 10-100x faster than Flake8, auto-fix.
+    category: linting
+    platforms: [api, cli, library]
+    icon: 🐍
+    
+  - id: black
+    name: Black
+    description: Python formatter. No config needed, deterministic output, widely adopted.
+    category: linting
+    platforms: [api, cli, library]
+    icon: ⬛
+
+  # ─────────────────────────────────────────────────────────────
+  # CLI LIBRARIES
+  # ─────────────────────────────────────────────────────────────
+  
+  - id: commander
+    name: Commander.js
+    description: Node.js CLI framework. Argument parsing, help generation, subcommands.
+    category: cli
+    platforms: [cli]
+    icon: 💻
+    
+  - id: inquirer
+    name: Inquirer.js
+    description: Interactive CLI prompts. Checkboxes, lists, password inputs, validation.
+    category: cli
+    platforms: [cli]
+    icon: ❓
+    
+  - id: typer
+    name: Typer
+    description: Python CLI framework. Type hints for args, auto-generated help, tab completion.
+    category: cli
+    platforms: [cli]
+    icon: ⌨️
+    
+  - id: rich
+    name: Rich
+    description: Python terminal formatting. Tables, progress bars, syntax highlighting, markdown.
+    category: cli
+    platforms: [cli]
+    icon: 🎨
+    
+  - id: cobra
+    name: Cobra
+    description: Go CLI library. Powers kubectl, Hugo, GitHub CLI. Subcommands, auto-docs.
+    category: cli
+    platforms: [cli]
+    icon: 🐍
+    
+  - id: clap
+    name: Clap
+    description: Rust argument parser. Derive macros, shell completions, fast compilation.
+    category: cli
+    platforms: [cli]
+    icon: 👏
+
+  # ─────────────────────────────────────────────────────────────
+  # API / REAL-TIME
+  # ─────────────────────────────────────────────────────────────
+
+  - id: graphql
+    name: GraphQL
+    description: Query language for APIs. Used by Facebook, GitHub, Shopify. Type-safe, efficient data fetching.
+    category: api
+    platforms: [web, api, fullstack]
+    icon: ◈
+
+  - id: relay
+    name: Relay
+    description: GraphQL client by Meta. Declarative data fetching, automatic cache, fragment colocation.
+    category: framework
+    platforms: [web, fullstack]
+    icon: ⚡
+
+  - id: redis
+    name: Redis
+    description: In-memory data store. Caching, sessions, pub/sub. Used by Twitter, GitHub, StackOverflow.
+    category: database
+    platforms: [api, fullstack]
+    icon: 🔴
+
+  - id: probot
+    name: Probot
+    description: GitHub App framework. Webhook handling, API wrappers, bot automation.
+    category: framework
+    platforms: [api]
+    icon: 🤖
+
+  - id: drf
+    name: Django REST Framework
+    description: Django API toolkit. Serializers, viewsets, authentication. Powers Instagram, Mozilla.
+    category: framework
+    platforms: [api, fullstack]
+    icon: 🎸
+
+  - id: nodejs
+    name: Node.js
+    description: JavaScript runtime. Event-driven, non-blocking I/O. Powers Netflix, PayPal, LinkedIn.
+    category: language
+    platforms: [api, cli, desktop, fullstack, library]
+    icon: 🟢
+
+  - id: websocket
+    name: WebSocket
+    description: Real-time bidirectional communication. Used by Slack, Discord, trading platforms.
+    category: api
+    platforms: [web, api, fullstack]
+    icon: 🔌
+
+  # ─────────────────────────────────────────────────────────────
+  # TESTING EXTENSIONS
+  # ─────────────────────────────────────────────────────────────
+
+  - id: react-testing-library
+    name: React Testing Library
+    description: React testing utilities. User-centric testing, queries by accessibility.
+    category: testing
+    platforms: [web, fullstack]
+    icon: 🧪
+
+  - id: vue-test-utils
+    name: Vue Test Utils
+    description: Vue.js testing utilities. Component mounting, event simulation.
+    category: testing
+    platforms: [web, fullstack]
+    icon: 🧪
+
+  - id: supertest
+    name: Supertest
+    description: HTTP assertion library. Test Express/Node APIs, chainable assertions.
+    category: testing
+    platforms: [api, fullstack]
+    icon: 🧪
+
+  - id: flutter-test
+    name: Flutter Test
+    description: Flutter testing framework. Widget tests, integration tests, golden tests.
+    category: testing
+    platforms: [mobile, desktop]
+    icon: 🧪

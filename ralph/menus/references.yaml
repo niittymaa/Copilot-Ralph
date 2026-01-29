@@ -1,0 +1,64 @@
+---
+id: references
+title: "📚 RALPH - REFERENCE FILES"
+description: Manage reference files for this project
+color: Magenta
+show_back: true
+show_quit: false
+---
+
+# Reference file management menu
+
+- key: Enter
+  label: Continue with current references
+  action: continue
+  description: Use currently loaded reference files
+  color: Green
+  condition: has_references
+
+- key: "1"
+  label: Use default spec folder
+  action: use-default
+  description: Use files from spec/ directory
+  color: Cyan
+
+- key: "2"
+  label: Add reference directory
+  action: add-directory
+  description: Add a folder of reference files
+  color: Yellow
+
+- key: "3"
+  label: Add reference file
+  action: add-file
+  description: Add individual reference files
+  color: Yellow
+
+- key: "4"
+  label: View current references
+  action: view-references
+  description: List all registered files
+  color: White
+  condition: has_references
+
+- key: "5"
+  label: Clear all references
+  action: clear-references
+  description: Remove all registered references
+  color: Red
+  condition: has_references
+
+- separator: true
+
+- key: "I"
+  label: Supported file types
+  action: show-types
+  description: Show all supported formats
+  color: Gray
+
+- key: H
+  label: "🏠 Home"
+  action: home
+  submenu: home
+  color: DarkGray
+  description: Return to main menu

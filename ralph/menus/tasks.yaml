@@ -1,0 +1,38 @@
+---
+id: tasks
+title: "📋 RALPH - TASK MANAGEMENT"
+description: View and manage implementation tasks
+color: Cyan
+show_back: true
+show_quit: true
+---
+
+# Task list is added dynamically
+
+- key: R
+  label: Refresh task status
+  action: refresh
+  description: Update task completion status
+  color: Cyan
+
+- key: P
+  label: Re-plan tasks
+  action: replan
+  description: Regenerate implementation plan from scratch
+  color: Yellow
+
+- separator: true
+
+- key: C
+  label: Continue building
+  action: continue
+  description: Resume work on pending tasks
+  color: Green
+  condition: has_pending_tasks
+
+- key: H
+  label: "🏠 Home"
+  action: home
+  submenu: home
+  color: DarkGray
+  description: Return to main menu

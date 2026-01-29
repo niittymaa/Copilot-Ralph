@@ -1,0 +1,18 @@
+---
+id: confirm-delete
+title: CONFIRM DELETION
+description: This action cannot be undone
+color: Red
+show_back: false
+show_quit: false
+---
+
+- key: Y
+  label: "Yes, delete {{item_name}}"
+  action: confirm
+  color: Red
+
+- key: N
+  label: No, cancel
+  action: cancel
+  color: Green

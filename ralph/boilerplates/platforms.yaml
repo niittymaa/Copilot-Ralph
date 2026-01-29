@@ -1,0 +1,48 @@
+# ═══════════════════════════════════════════════════════════════
+# Target Platforms for Project Boilerplate Wizard
+# ═══════════════════════════════════════════════════════════════
+# Each platform defines a category of application types
+# Platforms filter which tech stacks are shown to the user
+
+platforms:
+  - id: web
+    name: Web Application
+    description: Browser-based applications (SPA, SSR, static sites)
+    icon: 🌐
+    order: 1
+
+  - id: api
+    name: API / Backend Service
+    description: REST APIs, GraphQL servers, microservices
+    icon: ⚡
+    order: 2
+
+  - id: cli
+    name: Command-Line Tool
+    description: Terminal applications and scripts
+    icon: 💻
+    order: 3
+
+  - id: desktop
+    name: Desktop Application
+    description: Native or cross-platform desktop apps
+    icon: 🖥️
+    order: 4
+
+  - id: mobile
+    name: Mobile Application
+    description: iOS, Android, or cross-platform mobile apps
+    icon: 📱
+    order: 5
+
+  - id: fullstack
+    name: Full-Stack Application
+    description: Combined frontend and backend in one project
+    icon: 🔧
+    order: 6
+
+  - id: library
+    name: Library / Package
+    description: Reusable modules for npm, PyPI, NuGet, etc.
+    icon: 📦
+    order: 7

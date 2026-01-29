@@ -1,0 +1,62 @@
+{
+  "structure": {
+    "weight": 0.40,
+    "metrics": {
+      "fileSeparation": {
+        "description": "Score based on separate js/css/html files vs monolithic",
+        "ideal": "Separate files: html, css, js (or framework equivalent)"
+      },
+      "directoryStructure": {
+        "description": "Proper directory organization",
+        "bonusPatterns": ["src/", "lib/", "tests/", "public/", "components/"]
+      },
+      "moduleCount": {
+        "description": "Number of distinct source code files",
+        "minGood": 3,
+        "ideal": 5
+      }
+    }
+  },
+  "code": {
+    "weight": 0.30,
+    "metrics": {
+      "avgFunctionLength": {
+        "description": "Average lines per function",
+        "ideal": 20,
+        "maxGood": 50
+      },
+      "commentRatio": {
+        "description": "Comment lines / total code lines",
+        "minGood": 0.05,
+        "ideal": 0.15
+      }
+    }
+  },
+  "quality": {
+    "weight": 0.20,
+    "metrics": {
+      "testFileCount": {
+        "description": "Number of test files created",
+        "minGood": 1
+      },
+      "testCodeRatio": {
+        "description": "Test code lines / production code lines",
+        "ideal": 0.3
+      }
+    }
+  },
+  "efficiency": {
+    "weight": 0.10,
+    "metrics": {
+      "taskCompletionRate": {
+        "description": "Completed tasks / planned tasks",
+        "ideal": 1.0
+      },
+      "iterationsPerTask": {
+        "description": "Total iterations / completed tasks",
+        "ideal": 1.0,
+        "maxGood": 1.5
+      }
+    }
+  }
+}

@@ -1,0 +1,29 @@
+---
+id: spec-mode
+title: "📝 SELECT SPECIFICATION MODE"
+description: How would you like to create your spec?
+color: Magenta
+show_back: true
+show_quit: false
+---
+
+- key: 1
+  label: Interview mode
+  action: interview
+  description: Ralph asks questions to build complete spec
+  color: Green
+
+- key: 2
+  label: Quick mode
+  action: quick
+  description: Describe everything in one prompt
+  color: Yellow
+
+- separator: true
+
+- key: H
+  label: "🏠 Home"
+  action: home
+  submenu: home
+  color: DarkGray
+  description: Return to main menu

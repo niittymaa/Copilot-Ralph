@@ -1,0 +1,72 @@
+---
+id: specs-settings
+title: "📝 RALPH - SPECS CONFIGURATION"
+description: Configure specifications for this session
+color: Magenta
+show_back: true
+show_quit: false
+---
+
+# Specs configuration menu - similar to references menu
+# All settings are session-specific
+
+- key: Enter
+  label: Continue with current specs
+  action: continue
+  description: Use currently configured specs
+  color: Green
+  condition: has_specs
+
+- key: "1"
+  label: Use session specs folder
+  action: use-default
+  description: Use session's own specs/ directory
+  color: Cyan
+
+- key: "2"
+  label: Use shared specs folder
+  action: use-shared
+  description: Use ralph/specs/ shared across sessions
+  color: Blue
+
+- key: "3"
+  label: Set custom spec folder
+  action: set-custom-folder
+  description: Use a custom directory for specs
+  color: Yellow
+
+- key: "4"
+  label: Clear specs
+  action: clear-specs
+  description: Remove all spec configuration
+  color: Red
+  condition: has_specs
+
+- separator: true
+
+- key: "5"
+  label: "✨ Build spec from prompt"
+  action: build-prompt
+  description: Create spec from a single description
+  color: Green
+
+- key: "6"
+  label: "💬 Build spec via interview"
+  action: build-interview
+  description: Ralph asks questions to create spec
+  color: Green
+
+- key: "7"
+  label: "📄 Build spec from references"
+  action: build-from-references
+  description: Create spec from images/text files
+  color: Magenta
+
+- separator: true
+
+- key: V
+  label: View current specs
+  action: view-specs
+  description: List configured spec files
+  color: White
+  condition: has_specs

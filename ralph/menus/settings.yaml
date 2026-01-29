@@ -1,0 +1,48 @@
+---
+id: settings
+title: "⚙️  RALPH - SETTINGS"
+description: Configure Ralph behavior
+color: White
+show_back: true
+show_quit: false
+---
+
+- key: M
+  label: "AI model ({{current_model}})"
+  action: change-model
+  description: Change the AI model for code generation
+  color: Cyan
+
+- key: V
+  label: "Verbose mode ({{verbose_status}})"
+  action: toggle-verbose
+  description: Show detailed logs and debug information
+  color: Yellow
+
+- key: I
+  label: Max iterations
+  action: set-iterations
+  description: Set maximum build iterations (0 = unlimited)
+  color: White
+
+- key: L
+  label: "Memory system ({{memory_status}})"
+  action: toggle-memory
+  description: Enable/disable AI memory persistence
+  color: Green
+
+- separator: true
+
+- key: P
+  label: Switch project
+  action: switch-project
+  submenu: projects
+  description: Change to a different project
+  color: Magenta
+
+- key: H
+  label: "🏠 Home"
+  action: home
+  submenu: home
+  color: DarkGray
+  description: Return to main menu
