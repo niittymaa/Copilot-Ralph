@@ -14,14 +14,15 @@ set -euo pipefail
 
 MEMORY_FILE=""
 SETTINGS_FILE=""
-PROJECT_ROOT=""
+# PROJECT_ROOT is expected to be set by the caller (ralph.sh)
+# We don't re-declare it here to avoid shadowing
 MEMORY_ENABLED=true
 
 initialize_memory_system() {
     # Initialize memory system paths and load settings
     # Args: $1 = project root
-    PROJECT_ROOT="$1"
-    local ralph_dir="${PROJECT_ROOT}/.ralph"
+    local project_root="$1"
+    local ralph_dir="${project_root}/.ralph"
     MEMORY_FILE="${ralph_dir}/memory.md"
     SETTINGS_FILE="${ralph_dir}/settings.json"
     

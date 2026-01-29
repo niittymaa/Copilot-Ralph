@@ -3,13 +3,13 @@
 # Fork and clone a Ralph instance for a new project.
 # Automatically falls back to local-only mode if GitHub CLI is unavailable.
 #
-# Usage: ./fork.sh [-n NAME] [-f original|current|URL] [-l] [-V] [-h]
+# Usage: ./fork.sh [-n NAME] [-p PATH] [-f original|current|URL] [-l] [-V] [-h]
 
 set -euo pipefail
 
 # Constants
-ORIGINAL_REPO_URL="https://github.com/Promptly-AI-Agents/Copilot-Ralph"
-ORIGINAL_OWNER="Promptly-AI-Agents"
+ORIGINAL_REPO_URL="https://github.com/niittymaa/Copilot-Ralph"
+ORIGINAL_OWNER="niittymaa"
 ORIGINAL_REPO="Copilot-Ralph"
 
 # Colors
@@ -18,13 +18,17 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 GRAY='\033[0;90m'
+WHITE='\033[1;37m'
 NC='\033[0m'
 
 # Defaults
 NAME=""
+CUSTOM_PATH=""
 FORK_FROM=""
 LOCAL_ONLY=false
 NO_VSCODE=false
+NO_EXPLORER=false
+NO_TERMINAL=false
 
 #region Helper Functions
 
@@ -36,13 +40,16 @@ show_help() {
     cat << EOF
 Fork and clone a Ralph instance for a new project.
 
-Usage: ./fork.sh [-n NAME] [-f original|current|URL] [-l] [-V] [-h]
+Usage: ./fork.sh [-n NAME] [-p PATH] [-f original|current|URL] [-l] [-V] [-h]
 
 Options:
   -n, --name NAME       Name for the fork
+  -p, --path PATH       Custom path for the fork (default: .ralph/forks/)
   -f, --fork-from SRC   Fork source: 'original', 'current', or GitHub URL
   -l, --local-only      Force local-only mode
   -V, --no-vscode       Skip opening VS Code
+  --no-explorer         Skip opening file explorer
+  --no-terminal         Skip opening terminal
   -h, --help            Show this help
 EOF
 }
@@ -76,6 +83,48 @@ get_next_available_name() {
     echo "$candidate"
 }
 
+# Validates and resolves a path to its full form
+# Handles various formats: absolute, relative, drive-relative (Windows via WSL)
+resolve_smart_path() {
+    local input_path="$1"
+    
+    [[ -z "$input_path" ]] && return 1
+    
+    # Handle ~ expansion
+    if [[ "$input_path" == "~"* ]]; then
+        input_path="${input_path/#\~/$HOME}"
+    fi
+    
+    # Get full path using realpath if available, fallback to readlink
+    if command -v realpath &>/dev/null; then
+        # realpath -m allows non-existent paths
+        realpath -m "$input_path" 2>/dev/null || echo ""
+    elif [[ -e "$input_path" ]]; then
+        readlink -f "$input_path" 2>/dev/null || echo ""
+    else
+        # For non-existent paths, just resolve relative to pwd
+        local dir_part base_part
+        dir_part=$(dirname "$input_path")
+        base_part=$(basename "$input_path")
+        
+        if [[ -d "$dir_part" ]]; then
+            echo "$(cd "$dir_part" && pwd)/$base_part"
+        else
+            echo ""
+        fi
+    fi
+}
+
+test_valid_path() {
+    local test_path="$1"
+    [[ -z "$test_path" ]] && return 1
+    
+    # Check for basic validity
+    local resolved
+    resolved=$(resolve_smart_path "$test_path")
+    [[ -n "$resolved" ]]
+}
+
 #endregion
 
 #region Argument Parsing
@@ -83,9 +132,12 @@ get_next_available_name() {
 while [[ $# -gt 0 ]]; do
     case $1 in
         -n|--name) NAME="$2"; shift 2 ;;
+        -p|--path) CUSTOM_PATH="$2"; shift 2 ;;
         -f|--fork-from) FORK_FROM="$2"; shift 2 ;;
         -l|--local-only) LOCAL_ONLY=true; shift ;;
         -V|--no-vscode) NO_VSCODE=true; shift ;;
+        --no-explorer) NO_EXPLORER=true; shift ;;
+        --no-terminal) NO_TERMINAL=true; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo -e "${RED}Unknown option: $1${NC}"; show_help; exit 1 ;;
     esac
@@ -225,25 +277,58 @@ local_suffix=""
 write_info "Fork source: $FORK_SOURCE_URL$local_suffix"
 
 # Determine paths
-REPO_ROOT=$(git rev-parse --show-toplevel)
+REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 FORKS_DIR="$REPO_ROOT/.ralph/forks"
 
+# Handle custom path if provided
+if [[ -n "$CUSTOM_PATH" ]]; then
+    RESOLVED_PATH=$(resolve_smart_path "$CUSTOM_PATH")
+    if [[ -z "$RESOLVED_PATH" ]]; then
+        echo -e "${RED}ERROR: Invalid path: $CUSTOM_PATH${NC}"
+        exit 1
+    fi
+    
+    # If path is a directory that exists, use it as parent
+    if [[ -d "$RESOLVED_PATH" ]]; then
+        FORKS_DIR="$RESOLVED_PATH"
+    else
+        # Use as full path, derive fork directory from parent
+        FORKS_DIR=$(dirname "$RESOLVED_PATH")
+        NAME=$(basename "$RESOLVED_PATH")
+    fi
+fi
+
 # Step 4: Get fork name
+write_step 4 6 "Configuring fork location..."
+
 DEFAULT_NAME=$(get_next_available_name "my-project" "$FORKS_DIR")
 
 if [[ -z "$NAME" ]]; then
     echo ""
-    read -rp "Enter name for your new fork (Enter for '$DEFAULT_NAME'): " NAME
+    echo -e "${GRAY}  Default location: $FORKS_DIR/$DEFAULT_NAME${NC}"
+    echo -e "${GRAY}  (You can specify a different parent folder or full path)${NC}"
+    echo ""
+    read -rp "  Enter name for your new fork (Enter for '$DEFAULT_NAME'): " NAME
     [[ -z "$NAME" ]] && NAME="$DEFAULT_NAME"
 fi
 
 SAFE_NAME=$(echo "$NAME" | sed 's/[^a-zA-Z0-9_-]/-/g')
 FORK_PATH="$FORKS_DIR/$SAFE_NAME"
 
+# Validate the final path
 if [[ -d "$FORK_PATH" ]]; then
-    echo -e "${RED}ERROR: Fork directory already exists: $FORK_PATH${NC}"
+    # Check if directory is empty
+    if [[ -n "$(ls -A "$FORK_PATH" 2>/dev/null)" ]]; then
+        echo -e "${RED}ERROR: Fork directory already exists and is not empty: $FORK_PATH${NC}"
+        exit 1
+    fi
+elif [[ -f "$FORK_PATH" ]]; then
+    echo -e "${RED}ERROR: A file already exists at: $FORK_PATH${NC}"
     exit 1
 fi
+
+write_info "Location: $FORK_PATH"
+write_info "Name: $NAME"
 
 # Step 5: Confirmation
 echo -e "\n${YELLOW}========================================${NC}"
@@ -345,11 +430,69 @@ write_header "Success!"
 echo -e "${GREEN}Location: $FORK_PATH${NC}"
 [[ "$LOCAL_ONLY" == "false" ]] && echo -e "${CYAN}GitHub:   https://github.com/$GH_USER/$SAFE_NAME${NC}"
 
+# Post-fork actions menu
+echo ""
+echo -e "${WHITE}Post-Fork Actions:${NC}"
+echo ""
+
+# VS Code
 if [[ "$NO_VSCODE" == "false" ]]; then
-    echo -e "\n${GRAY}Opening in VS Code...${NC}"
-    code "$FORK_PATH" || true
+    echo -e "  ${CYAN}[1] Open in VS Code${NC}"
+    read -rp "  Open in VS Code? ([Y]es/no): " open_vscode
+    [[ -z "$open_vscode" ]] && open_vscode="y"
+    if [[ "$open_vscode" =~ ^(y|yes|Y|Yes|YES)$ ]]; then
+        code "$FORK_PATH" 2>/dev/null || echo -e "    ${YELLOW}VS Code not found${NC}"
+    fi
 fi
 
-echo -e "\n${YELLOW}Next: cd \"$FORK_PATH\" && ./ralph/ralph.sh${NC}\n"
+# File Explorer (platform-specific)
+if [[ "$NO_EXPLORER" == "false" ]]; then
+    echo -e "  ${CYAN}[2] Open in File Explorer${NC}"
+    read -rp "  Open folder in file explorer? (yes/[N]o): " open_explorer
+    if [[ "$open_explorer" =~ ^(y|yes|Y|Yes|YES)$ ]]; then
+        # Detect platform and open accordingly
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            open "$FORK_PATH" 2>/dev/null || true
+        elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+            # Check for WSL
+            if grep -qi microsoft /proc/version 2>/dev/null; then
+                # WSL - use Windows explorer
+                explorer.exe "$(wslpath -w "$FORK_PATH")" 2>/dev/null || true
+            else
+                # Native Linux
+                xdg-open "$FORK_PATH" 2>/dev/null || true
+            fi
+        elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+            explorer "$FORK_PATH" 2>/dev/null || true
+        fi
+    fi
+fi
+
+# Terminal
+if [[ "$NO_TERMINAL" == "false" ]]; then
+    echo -e "  ${CYAN}[3] Open Terminal in Project${NC}"
+    read -rp "  Open new terminal in project? (yes/[N]o): " open_terminal
+    if [[ "$open_terminal" =~ ^(y|yes|Y|Yes|YES)$ ]]; then
+        # Detect platform and open terminal
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            osascript -e "tell application \"Terminal\" to do script \"cd '$FORK_PATH'\"" 2>/dev/null || true
+        elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+            # Try various terminal emulators
+            if command -v gnome-terminal &>/dev/null; then
+                gnome-terminal --working-directory="$FORK_PATH" 2>/dev/null &
+            elif command -v konsole &>/dev/null; then
+                konsole --workdir "$FORK_PATH" 2>/dev/null &
+            elif command -v xterm &>/dev/null; then
+                xterm -e "cd '$FORK_PATH' && bash" 2>/dev/null &
+            else
+                echo -e "    ${YELLOW}No supported terminal emulator found${NC}"
+            fi
+        fi
+    fi
+fi
+
+echo ""
+echo -e "${YELLOW}Next: cd \"$FORK_PATH\" && ./ralph/ralph.sh${NC}"
+echo ""
 
 #endregion

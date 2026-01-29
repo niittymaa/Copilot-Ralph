@@ -9,7 +9,7 @@
 # - Optionally AGENTS.md (prompts user)
 #
 # Usage: ./ralph/ralph.sh [options]
-#   -m, --mode         Mode: auto|plan|build|agents|sessions (default: auto)
+#   -m, --mode         Mode: auto|plan|build|agents|sessions|benchmark (default: auto)
 #   -M, --model        AI model to use (e.g., claude-sonnet-4, gpt-4.1)
 #   -L, --list-models  List available AI models and exit
 #   -n, --max          Max iterations (default: 0=unlimited, runs until complete)
@@ -19,6 +19,13 @@
 #   -v, --venv         Venv mode: auto|skip|reset (default: auto)
 #   -s, --session      Switch to session by ID
 #   --new-session      Create a new session with name
+#   --memory           Memory system: on|off|status
+#   --dry-run          Preview mode (no tokens, no changes)
+#   --quick            Quick mode for benchmark
+#   --check-update     Check for updates
+#   --update           Apply updates
+#   --agent            Custom agent file
+#   --auto-start       Skip menus, start immediately
 #   -h, --help         Show help
 
 set -euo pipefail
@@ -225,7 +232,7 @@ show_help() {
     echo ""
     echo "Options:"
     echo "  -m, --mode MODE       Operation mode (default: auto)"
-    echo "                        auto|plan|build|agents|continue|sessions"
+    echo "                        auto|plan|build|agents|continue|sessions|benchmark"
     echo "  -M, --model MODEL     AI model to use"
     echo "  -L, --list-models     List available models"
     echo "  -n, --max N           Max build iterations (0=unlimited)"
@@ -236,6 +243,12 @@ show_help() {
     echo "  -s, --session ID      Switch to session"
     echo "  --new-session NAME    Create new session"
     echo "  --memory MODE         Memory system: on|off|status"
+    echo "  --dry-run             Preview mode (no tokens, no changes)"
+    echo "  --quick               Quick mode for benchmark"
+    echo "  --check-update        Check for updates"
+    echo "  --update              Apply updates"
+    echo "  --agent FILE          Custom agent file"
+    echo "  --auto-start          Skip menus, start immediately"
     echo "  -h, --help            Show this help"
     echo ""
     exit 0
@@ -255,6 +268,12 @@ VENV_MODE="auto"
 SESSION=""
 NEW_SESSION=""
 MEMORY=""
+DRY_RUN=false
+QUICK=false
+CHECK_UPDATE=false
+DO_UPDATE=false
+AGENT=""
+AUTO_START=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -301,6 +320,30 @@ while [[ $# -gt 0 ]]; do
             MEMORY="$2"
             shift 2
             ;;
+        --dry-run)
+            DRY_RUN=true
+            shift
+            ;;
+        --quick)
+            QUICK=true
+            shift
+            ;;
+        --check-update)
+            CHECK_UPDATE=true
+            shift
+            ;;
+        --update)
+            DO_UPDATE=true
+            shift
+            ;;
+        --agent)
+            AGENT="$2"
+            shift 2
+            ;;
+        --auto-start)
+            AUTO_START=true
+            shift
+            ;;
         -h|--help)
             show_help
             ;;
@@ -310,6 +353,33 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# ═══════════════════════════════════════════════════════════════
+#                     CONFIGURATION
+# ═══════════════════════════════════════════════════════════════
+
+# Load Ralph configuration from ralph/config.json if it exists
+get_ralph_config() {
+    local config_path="$RALPH_DIR/config.json"
+    
+    if [[ ! -f "$config_path" ]]; then
+        # Return defaults (no file to create in bash - just use defaults)
+        return
+    fi
+    
+    # Load config values if jq is available
+    if command -v jq &> /dev/null; then
+        DEVELOPER_MODE=$(jq -r '.developer_mode // false' "$config_path" 2>/dev/null || echo "false")
+        VERBOSE_MODE=$(jq -r '.verbose_mode // true' "$config_path" 2>/dev/null || echo "true")
+        CONFIG_VENV_MODE=$(jq -r '.venv_mode // "auto"' "$config_path" 2>/dev/null || echo "auto")
+    fi
+}
+
+# Load configuration early
+DEVELOPER_MODE=false
+VERBOSE_MODE=true
+CONFIG_VENV_MODE="auto"
+get_ralph_config
 
 # ═══════════════════════════════════════════════════════════════
 #                     MEMORY MANAGEMENT
@@ -354,6 +424,80 @@ if [[ -n "$MEMORY" ]]; then
 fi
 
 # ═══════════════════════════════════════════════════════════════
+#                     DRY-RUN MODE
+# ═══════════════════════════════════════════════════════════════
+
+# Export DRY_RUN for child scripts
+if [[ "$DRY_RUN" == "true" ]]; then
+    export RALPH_DRY_RUN=true
+    echo ""
+    echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
+    echo -e "${WHITE}  DRY-RUN MODE ENABLED${NC}"
+    echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
+    echo ""
+    echo -e "${YELLOW}  • NO AI tokens will be spent${NC}"
+    echo -e "${YELLOW}  • NO files will be modified${NC}"
+    echo -e "${YELLOW}  • Actions will be simulated and displayed${NC}"
+    echo ""
+fi
+
+# ═══════════════════════════════════════════════════════════════
+#                     UPDATE CHECK
+# ═══════════════════════════════════════════════════════════════
+
+# Handle --check-update flag
+if [[ "$CHECK_UPDATE" == "true" ]]; then
+    UPDATE_SCRIPT="$CORE_DIR/update.sh"
+    if [[ -f "$UPDATE_SCRIPT" ]]; then
+        source "$UPDATE_SCRIPT"
+        check_for_updates "$PROJECT_ROOT"
+    else
+        echo -e "${YELLOW}Update module not found.${NC}"
+    fi
+    exit 0
+fi
+
+# Handle --update flag
+if [[ "$DO_UPDATE" == "true" ]]; then
+    UPDATE_SCRIPT="$CORE_DIR/update.sh"
+    if [[ -f "$UPDATE_SCRIPT" ]]; then
+        source "$UPDATE_SCRIPT"
+        apply_updates "$PROJECT_ROOT"
+    else
+        echo -e "${YELLOW}Update module not found.${NC}"
+    fi
+    exit 0
+fi
+
+# Show update notification on startup (only in interactive modes)
+if [[ "$AUTO_START" != "true" ]] && [[ "$MODE" != "benchmark" ]]; then
+    UPDATE_SCRIPT="$CORE_DIR/update.sh"
+    if [[ -f "$UPDATE_SCRIPT" ]]; then
+        source "$UPDATE_SCRIPT"
+        show_update_notification "$PROJECT_ROOT" 2>/dev/null || true
+    fi
+fi
+
+# ═══════════════════════════════════════════════════════════════
+#                     BENCHMARK MODE
+# ═══════════════════════════════════════════════════════════════
+
+if [[ "$MODE" == "benchmark" ]]; then
+    BENCHMARK_SCRIPT="$RALPH_DIR/optimizer/benchmark.sh"
+    if [[ ! -f "$BENCHMARK_SCRIPT" ]]; then
+        echo -e "${RED}Error: Benchmark script not found at $BENCHMARK_SCRIPT${NC}" >&2
+        exit 1
+    fi
+    
+    BENCH_ARGS=()
+    [[ -n "$MODEL" ]] && BENCH_ARGS+=("-M" "$MODEL")
+    [[ "$MAX_ITERATIONS" -gt 0 ]] && BENCH_ARGS+=("-n" "$MAX_ITERATIONS")
+    [[ "$QUICK" == "true" ]] && BENCH_ARGS+=("--quick")
+    
+    exec "$BENCHMARK_SCRIPT" "${BENCH_ARGS[@]}"
+fi
+
+# ═══════════════════════════════════════════════════════════════
 #                     RUN SETUP
 # ═══════════════════════════════════════════════════════════════
 
@@ -385,6 +529,10 @@ ARGS+=("-v" "$VENV_MODE")
 [[ "$VERBOSE" == "true" ]] && ARGS+=("-V")
 [[ -n "$SESSION" ]] && ARGS+=("-s" "$SESSION")
 [[ -n "$NEW_SESSION" ]] && ARGS+=("--new-session" "$NEW_SESSION")
+[[ "$DRY_RUN" == "true" ]] && ARGS+=("--dry-run")
+[[ -n "$AGENT" ]] && ARGS+=("--agent" "$AGENT")
+[[ "$AUTO_START" == "true" ]] && ARGS+=("--auto-start")
+[[ "$DEVELOPER_MODE" == "true" ]] && ARGS+=("--developer-mode")
 
 # ═══════════════════════════════════════════════════════════════
 #                     INVOKE CORE LOOP

@@ -23,13 +23,59 @@ TASKS_ROOT=""
 ACTIVE_TASK_FILE=""
 SHARED_SPECS_DIR=""
 TASK_PROJECT_ROOT=""
+GLOBAL_SPECS_DIR=""
+GLOBAL_REFERENCES_DIR=""
 
 initialize_task_paths() {
     local project_root="$1"
     TASK_PROJECT_ROOT="$project_root"
     TASKS_ROOT="$project_root/.ralph/tasks"
     ACTIVE_TASK_FILE="$project_root/.ralph/active-task"
-    SHARED_SPECS_DIR="$project_root/specs"
+    SHARED_SPECS_DIR="$project_root/ralph/specs"
+    GLOBAL_SPECS_DIR="$project_root/ralph/specs"
+    GLOBAL_REFERENCES_DIR="$project_root/ralph/references"
+}
+
+# ═══════════════════════════════════════════════════════════════
+#                     GLOBAL FOLDER FUNCTIONS
+# ═══════════════════════════════════════════════════════════════
+
+get_global_specs_folder() {
+    # Gets the global specs folder path (ralph/specs/)
+    echo "$GLOBAL_SPECS_DIR"
+}
+
+get_global_references_folder() {
+    # Gets the global references folder path (ralph/references/)
+    echo "$GLOBAL_REFERENCES_DIR"
+}
+
+get_session_specs_folder() {
+    # Gets the session-specific specs folder path
+    local task_id="${1:-$(get_active_task_id)}"
+    
+    if [[ -z "$task_id" ]]; then
+        echo ""
+        return
+    fi
+    
+    local task_dir
+    task_dir=$(get_task_directory "$task_id")
+    echo "$task_dir/session-specs"
+}
+
+get_session_references_folder() {
+    # Gets the session-specific references folder path
+    local task_id="${1:-$(get_active_task_id)}"
+    
+    if [[ -z "$task_id" ]]; then
+        echo ""
+        return
+    fi
+    
+    local task_dir
+    task_dir=$(get_task_directory "$task_id")
+    echo "$task_dir/session-references"
 }
 
 # ═══════════════════════════════════════════════════════════════

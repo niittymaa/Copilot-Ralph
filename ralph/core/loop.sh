@@ -189,6 +189,13 @@ list_models() {
 }
 
 # Parse arguments
+SESSION=""
+NEW_SESSION=""
+DRY_RUN=false
+AGENT=""
+AUTO_START=false
+DEVELOPER_MODE=false
+
 while [[ $# -gt 0 ]]; do
     case $1 in
         -m|--mode) MODE="$2"; shift 2 ;;
@@ -198,33 +205,56 @@ while [[ $# -gt 0 ]]; do
         -d|--delegate) DELEGATE=true; shift ;;
         --manual) MANUAL=true; shift ;;
         -V|--verbose) VERBOSE=true; shift ;;
-        --venv) VENV_MODE="$2"; shift 2 ;;
+        -v|--venv) VENV_MODE="$2"; shift 2 ;;
+        -s|--session) SESSION="$2"; shift 2 ;;
+        --new-session) NEW_SESSION="$2"; shift 2 ;;
+        --dry-run) DRY_RUN=true; shift ;;
+        --agent) AGENT="$2"; shift 2 ;;
+        --auto-start) AUTO_START=true; shift ;;
+        --developer-mode) DEVELOPER_MODE=true; shift ;;
         -h|--help)
             echo "Usage: ./ralph.sh [options]"
-            echo "  -m, --mode         Mode: auto|plan|build|agents|continue (default: auto)"
+            echo "  -m, --mode         Mode: auto|plan|build|agents|continue|sessions|benchmark"
             echo "  -M, --model        AI model to use (e.g., claude-sonnet-4, gpt-4.1)"
             echo "  -L, --list-models  List available AI models and exit"
             echo "  -n, --max          Max iterations (default: 0=unlimited)"
             echo "  -d, --delegate     Delegate to Copilot coding agent"
             echo "  --manual           Manual mode (copy/paste prompts)"
             echo "  -V, --verbose      Verbose mode (detailed output)"
-            echo "  --venv             Venv mode: auto|skip|reset (default: auto)"
+            echo "  -v, --venv         Venv mode: auto|skip|reset (default: auto)"
+            echo "  -s, --session      Switch to session by ID"
+            echo "  --new-session      Create new session with name"
+            echo "  --dry-run          Preview mode (no tokens/changes)"
+            echo "  --agent            Custom agent file"
+            echo "  --auto-start       Skip menus, start immediately"
             exit 0
             ;;
         *) echo "Unknown option: $1"; exit 1 ;;
     esac
 done
 
+# Check for DRY_RUN environment variable from parent script
+if [[ "${RALPH_DRY_RUN:-}" == "true" ]]; then
+    DRY_RUN=true
+fi
+
 # File paths - ralph files in ralph/ folder, specs at project root
+# These are defaults - will be updated based on active task after task module loads
 PLAN_FILE="$RALPH_DIR/IMPLEMENTATION_PLAN.md"
 PROGRESS_FILE="$RALPH_DIR/progress.txt"
 SPECS_DIR="$PROJECT_ROOT/specs"
+CURRENT_TASK_ID=""
 
 # Agent files (in .github/agents for Copilot CLI compatibility)
 BUILD_AGENT="$AGENTS_DIR/ralph.agent.md"
 PLAN_AGENT="$AGENTS_DIR/ralph-planner.agent.md"
 SPEC_CREATOR_AGENT="$AGENTS_DIR/ralph-spec-creator.agent.md"
 AGENTS_UPDATER_AGENT="$AGENTS_DIR/ralph-agents-updater.agent.md"
+
+# Custom agent override
+if [[ -n "$AGENT" ]] && [[ -f "$AGENT" ]]; then
+    BUILD_AGENT="$AGENT"
+fi
 
 # Signals
 COMPLETE_SIGNAL='<promise>COMPLETE</promise>'
@@ -274,6 +304,37 @@ if [[ -f "$TASKS_SCRIPT" ]]; then
     source "$TASKS_SCRIPT"
     initialize_task_paths "$PROJECT_ROOT"
     initialize_task_system
+    
+    # Handle session switching if -s parameter was passed
+    if [[ -n "$SESSION" ]]; then
+        if task_exists "$SESSION"; then
+            set_active_task "$SESSION"
+            log "Switched to session: $SESSION" "success"
+        else
+            echo -e "${RED}Error: Session '$SESSION' does not exist${NC}" >&2
+            exit 1
+        fi
+    fi
+    
+    # Handle new session creation if --new-session was passed
+    if [[ -n "$NEW_SESSION" ]]; then
+        local new_task_id
+        new_task_id=$(create_task "$NEW_SESSION" "" "isolated")
+        if [[ -n "$new_task_id" ]]; then
+            set_active_task "$new_task_id"
+            echo -e "${GREEN}Created and activated session: $new_task_id${NC}"
+        else
+            echo -e "${RED}Failed to create session${NC}" >&2
+            exit 1
+        fi
+    fi
+fi
+
+# Source the memory module for cross-session learnings
+MEMORY_SCRIPT="$CORE_DIR/memory.sh"
+if [[ -f "$MEMORY_SCRIPT" ]]; then
+    source "$MEMORY_SCRIPT"
+    initialize_memory_system "$PROJECT_ROOT"
 fi
 
 # Source the presets module
@@ -282,6 +343,35 @@ if [[ -f "$PRESETS_SCRIPT" ]]; then
     source "$PRESETS_SCRIPT"
     initialize_preset_paths "$PROJECT_ROOT"
 fi
+
+# ═══════════════════════════════════════════════════════════════
+#                     TASK CONTEXT MANAGEMENT
+# ═══════════════════════════════════════════════════════════════
+
+# Function to update file paths based on active task
+update_task_context() {
+    local task_id="${1:-}"
+    
+    if [[ -z "$task_id" ]] && type get_active_task_id &>/dev/null; then
+        task_id=$(get_active_task_id)
+    fi
+    
+    CURRENT_TASK_ID="$task_id"
+    
+    if [[ -n "$task_id" ]] && type get_task_directory &>/dev/null; then
+        local task_dir
+        task_dir=$(get_task_directory "$task_id")
+        
+        if [[ -d "$task_dir" ]]; then
+            PLAN_FILE=$(get_task_plan_file "$task_id")
+            PROGRESS_FILE=$(get_task_progress_file "$task_id")
+            SPECS_DIR=$(get_task_specs_dir "$task_id")
+        fi
+    fi
+}
+
+# Initialize task context (sets file paths based on active task)
+update_task_context
 
 # ═══════════════════════════════════════════════════════════════
 #                         UTILITIES
@@ -393,8 +483,15 @@ get_task_stats() {
         echo "0 0 0"
         return
     fi
-    local pending=$(grep -c '^\s*-\s*\[\s*\]' "$PLAN_FILE" 2>/dev/null || echo 0)
-    local completed=$(grep -c '^\s*-\s*\[x\]' "$PLAN_FILE" 2>/dev/null || echo 0)
+    local pending
+    local completed
+    pending=$(grep -c '^\s*-\s*\[\s*\]' "$PLAN_FILE" 2>/dev/null) || pending=0
+    completed=$(grep -c '^\s*-\s*\[x\]' "$PLAN_FILE" 2>/dev/null) || completed=0
+    # Ensure values are integers
+    pending=${pending//[^0-9]/}
+    completed=${completed//[^0-9]/}
+    [[ -z "$pending" ]] && pending=0
+    [[ -z "$completed" ]] && completed=0
     local total=$((pending + completed))
     echo "$total $completed $pending"
 }
@@ -1108,6 +1205,22 @@ invoke_copilot() {
         model_info=" (model: $MODEL)"
     fi
     
+    # DRY-RUN MODE: Simulate the call instead of making it
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo ""
+        echo -e "${CYAN}  ┌─ DRY-RUN: Would invoke Copilot CLI ────────────────────${NC}"
+        echo -e "${GRAY}  │ Phase: $phase${NC}"
+        echo -e "${GRAY}  │ Model: ${MODEL:-default}${NC}"
+        echo -e "${GRAY}  │ Prompt length: ${#prompt} chars${NC}"
+        echo -e "${GRAY}  │ Prompt preview: ${prompt:0:80}...${NC}"
+        echo -e "${CYAN}  └─ (No actual API call made) ────────────────────────────${NC}"
+        echo ""
+        
+        # Return simulated success signal
+        echo "<promise>COMPLETE</promise> [DRY-RUN: Simulated completion]"
+        return 0
+    fi
+    
     log_verbose "Prompt preview: ${prompt:0:100}..." "Copilot"
     
     local cli_args=(-p "$prompt" --allow-all-tools)
@@ -1402,10 +1515,26 @@ main() {
         plan)     mode_text="PLAN ONLY" ;;
         build)    mode_text="BUILD ONLY" ;;
         agents)   mode_text="AGENTS.MD UPDATE ONLY" ;;
+        sessions) mode_text="SESSION MANAGEMENT" ;;
         *)        echo "Invalid mode: $MODE"; exit 1 ;;
     esac
     
-    log "RALPH LOOP - $mode_text" "header"
+    # Show dry-run indicator in header
+    local dryrun_indicator=""
+    if [[ "$DRY_RUN" == "true" ]]; then
+        dryrun_indicator=" [DRY-RUN]"
+    fi
+    
+    log "RALPH LOOP - $mode_text$dryrun_indicator" "header"
+    
+    # Show active session if any
+    if type get_active_task_id &>/dev/null; then
+        local active_session
+        active_session=$(get_active_task_id)
+        if [[ -n "$active_session" ]]; then
+            echo -e "  Session: ${CYAN}$active_session${NC}"
+        fi
+    fi
     
     check_copilot_cli || exit 1
     
@@ -1440,6 +1569,11 @@ main() {
     fi
     echo -e " ${GRAY}[V to toggle]${NC}"
     
+    # Show dry-run mode status
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo -e "  Dry-Run: ${YELLOW}ENABLED${NC} (no tokens, no changes)"
+    fi
+    
     # Setup Python venv isolation
     if [[ "$VENV_MODE" != "skip" ]]; then
         if [[ -f "$VENV_SCRIPT" ]]; then
@@ -1461,41 +1595,46 @@ main() {
         echo -e "${YELLOW}  Venv: SKIPPED${NC}"
     fi
     
-    echo ""
-    echo -e "${GRAY}  Press [M] to change model, [V] to toggle verbose, or [Enter] to continue...${NC}"
-    
-    # Loop to allow multiple changes before continuing
-    while true; do
-        read -rsn1 key
+    # Skip interactive menu if auto-start mode is enabled
+    if [[ "$AUTO_START" == "true" ]]; then
+        log "Auto-start mode: Skipping interactive menu" "info"
+    else
+        echo ""
+        echo -e "${GRAY}  Press [M] to change model, [V] to toggle verbose, or [Enter] to continue...${NC}"
         
-        if [[ "$key" == "m" ]] || [[ "$key" == "M" ]]; then
-            local new_model
-            new_model=$(show_model_menu)
-            if [[ -z "$new_model" ]]; then
-                log "Cancelled."
-                return
+        # Loop to allow multiple changes before continuing
+        while true; do
+            read -rsn1 key
+            
+            if [[ "$key" == "m" ]] || [[ "$key" == "M" ]]; then
+                local new_model
+                new_model=$(show_model_menu)
+                if [[ -z "$new_model" ]]; then
+                    log "Cancelled."
+                    return
+                fi
+                MODEL="$new_model"
+                log "Model set to: $MODEL" "success"
+                echo ""
+                echo -e "${GRAY}  Press [M] to change model, [V] to toggle verbose, or [Enter] to continue...${NC}"
+            elif [[ "$key" == "v" ]] || [[ "$key" == "V" ]]; then
+                # Toggle verbose mode
+                if [[ "$VERBOSE" == "true" ]]; then
+                    VERBOSE=false
+                    log "Verbose mode: OFF" "info"
+                else
+                    VERBOSE=true
+                    log "Verbose mode: ON" "success"
+                fi
+                echo ""
+                echo -e "${GRAY}  Press [M] to change model, [V] to toggle verbose, or [Enter] to continue...${NC}"
+            elif [[ "$key" == "" ]]; then
+                # Enter key - continue
+                break
             fi
-            MODEL="$new_model"
-            log "Model set to: $MODEL" "success"
-            echo ""
-            echo -e "${GRAY}  Press [M] to change model, [V] to toggle verbose, or [Enter] to continue...${NC}"
-        elif [[ "$key" == "v" ]] || [[ "$key" == "V" ]]; then
-            # Toggle verbose mode
-            if [[ "$VERBOSE" == "true" ]]; then
-                VERBOSE=false
-                log "Verbose mode: OFF" "info"
-            else
-                VERBOSE=true
-                log "Verbose mode: ON" "success"
-            fi
-            echo ""
-            echo -e "${GRAY}  Press [M] to change model, [V] to toggle verbose, or [Enter] to continue...${NC}"
-        elif [[ "$key" == "" ]]; then
-            # Enter key - continue
-            break
-        fi
-        # Ignore other keys
-    done
+            # Ignore other keys
+        done
+    fi
     echo ""
     
     # Initialize required files if missing

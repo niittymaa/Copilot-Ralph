@@ -128,12 +128,19 @@ test_venv_needed() {
 create_ralph_venv() {
     # Create the Python virtual environment
     # Usage: create_ralph_venv [--force]
+    # Respects RALPH_DRY_RUN environment variable
     local force=false
     [[ "$1" == "--force" ]] && force=true
     
     if [[ -z "$VENV_DIR" ]]; then
         venv_log "Error: Venv paths not initialized" "$VENV_RED"
         return 1
+    fi
+    
+    # Dry-run mode check
+    if [[ "$RALPH_DRY_RUN" == "true" ]]; then
+        venv_log "[DRY-RUN] Would create virtual environment at $VENV_DIR" "$VENV_YELLOW"
+        return 0
     fi
     
     # Check if venv already exists
@@ -182,9 +189,16 @@ create_ralph_venv() {
 
 enable_ralph_venv() {
     # Activate the virtual environment for the current session
+    # Respects RALPH_DRY_RUN environment variable
     if [[ -z "$VENV_DIR" ]]; then
         venv_log "Error: Venv paths not initialized" "$VENV_RED"
         return 1
+    fi
+    
+    # Dry-run mode check
+    if [[ "$RALPH_DRY_RUN" == "true" ]]; then
+        venv_log "[DRY-RUN] Would activate virtual environment at $VENV_DIR" "$VENV_YELLOW"
+        return 0
     fi
     
     if ! test_venv_exists; then
