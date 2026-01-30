@@ -344,6 +344,12 @@ if [[ -f "$PRESETS_SCRIPT" ]]; then
     initialize_preset_paths "$PROJECT_ROOT"
 fi
 
+# Source the interrupt handler module for loop interrupt control
+INTERRUPT_HANDLER_SCRIPT="$RALPH_DIR/cli/sh/interruptHandler.sh"
+if [[ -f "$INTERRUPT_HANDLER_SCRIPT" ]]; then
+    source "$INTERRUPT_HANDLER_SCRIPT"
+fi
+
 # ═══════════════════════════════════════════════════════════════
 #                     TASK CONTEXT MANAGEMENT
 # ═══════════════════════════════════════════════════════════════
@@ -1238,15 +1244,20 @@ invoke_copilot() {
     if [[ "$VERBOSE" == "true" ]]; then
         # Verbose mode - stream output directly with elapsed time indicator
         log "Invoking Copilot CLI$model_info..."
-        echo -e "${DARK_CYAN}  ┌─ Live Output ───────────────────────────────────────────${NC}"
+        echo -e "${DARK_CYAN}  ┌─ Live Output (ESC=interrupt menu, Ctrl+C=exit) ────────────${NC}"
         
         # Run copilot in background and stream output with time updates
         local temp_output=$(mktemp)
         local last_time_update=$start_time
+        local cancelled=false
         
         # Start copilot in background
         copilot "${cli_args[@]}" > "$temp_output" 2>&1 &
         local copilot_pid=$!
+        
+        # Save terminal settings for key reading
+        local old_stty
+        old_stty=$(stty -g 2>/dev/null)
         
         # Monitor and display output with elapsed time
         local last_line_count=0
@@ -1261,6 +1272,44 @@ invoke_copilot() {
                 printf -v time_str "%02d:%02d" $mins $secs
                 echo -e "${DARK_CYAN}  │ ⏱️  Elapsed: ${time_str}${NC}" >&2
                 last_time_update=$now
+            fi
+            
+            # Check for key input (non-blocking)
+            stty -echo -icanon min 0 time 1 2>/dev/null
+            local key_char
+            key_char=$(dd bs=1 count=1 2>/dev/null)
+            stty "$old_stty" 2>/dev/null
+            
+            if [[ "$key_char" == $'\x1b' ]]; then
+                # ESC key - show interrupt menu
+                echo -e "${YELLOW}  │ [Paused]${NC}" >&2
+                
+                if type show_interrupt_menu &>/dev/null; then
+                    show_interrupt_menu "Copilot is processing (Iteration $ITERATION)"
+                    
+                    case "$INTERRUPT_RESULT" in
+                        cancel)
+                            # Cancel instantly
+                            kill "$copilot_pid" 2>/dev/null || true
+                            wait "$copilot_pid" 2>/dev/null || true
+                            echo -e "${YELLOW}  └─ Cancelled by user ────────────────────────────────${NC}"
+                            rm -f "$temp_output"
+                            cancelled=true
+                            update_copilot_stats "false" "true" "$(($(date +%s) - start_time))" "$phase"
+                            echo "Operation cancelled by user"
+                            return 1
+                            ;;
+                        stop-after)
+                            # Finish this iteration, then stop
+                            echo -e "${CYAN}  │ Loop will stop after this iteration completes${NC}" >&2
+                            echo -e "${GRAY}  │ Resuming...${NC}" >&2
+                            ;;
+                        continue)
+                            # Continue without interruption
+                            echo -e "${GRAY}  │ Resuming...${NC}" >&2
+                            ;;
+                    esac
+                fi
             fi
             
             # Read and display new lines
@@ -1436,6 +1485,11 @@ invoke_building() {
         return 0
     fi
     
+    # Reset interrupt state at start of build loop
+    if type reset_interrupt_state &>/dev/null; then
+        reset_interrupt_state
+    fi
+    
     echo ""
     
     while true; do
@@ -1489,8 +1543,24 @@ invoke_building() {
         local output
         output=$(invoke_copilot "$task_prompt" "Copilot is working..." "Building")
         
+        # Check if cancelled
+        if [[ "$output" == "Operation cancelled by user" ]]; then
+            log "Operation cancelled - returning to menu" "warning"
+            return 0
+        fi
+        
         if [[ "$output" == *"$COMPLETE_SIGNAL"* ]]; then
             log "ALL TASKS COMPLETED!" "success"
+            break
+        fi
+        
+        # Check if user requested to stop after this iteration
+        if type test_stop_after_iteration &>/dev/null && test_stop_after_iteration; then
+            log "Stopping loop as requested (completed iteration $ITERATION)" "info"
+            # Reset the interrupt state for next run
+            if type reset_interrupt_state &>/dev/null; then
+                reset_interrupt_state
+            fi
             break
         fi
         
