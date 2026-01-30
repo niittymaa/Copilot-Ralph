@@ -171,6 +171,12 @@ if (Test-Path $spinnerScript) {
     . $spinnerScript
 }
 
+# Source the interrupt handler module (for loop interrupt control)
+$interruptHandlerScript = Join-Path $script:RalphDir 'cli\ps\interruptHandler.ps1'
+if (Test-Path $interruptHandlerScript) {
+    . $interruptHandlerScript
+}
+
 # Source the menus module FIRST (other modules depend on it)
 $menusScript = Join-Path $script:CoreDir 'menus.ps1'
 if (Test-Path $menusScript) {
@@ -765,7 +771,7 @@ function Invoke-CopilotInternal {
     if ($script:VerboseMode) {
         # Verbose mode: stream output to console in real-time using Start-Process (avoids Job encoding issues)
         Write-Host "  ┌─ Copilot CLI Output ──────────────────────────────" -ForegroundColor DarkCyan
-        Write-Host "  │ (ESC=cancel, Ctrl+C×2=exit, V=toggle verbose)" -ForegroundColor DarkGray
+        Write-Host "  │ (ESC=interrupt menu, Ctrl+C×2=exit, V=toggle verbose)" -ForegroundColor DarkGray
         
         # Create temp directory for prompt file
         $tempDir = Join-Path $env:TEMP "ralph-copilot"
@@ -811,33 +817,74 @@ function Invoke-CopilotInternal {
                 if ([Console]::KeyAvailable) {
                     $key = [Console]::ReadKey($true)
                     
-                    # ESC key - show cancellation confirmation
+                    # ESC key - show interrupt menu with 3 options
                     if ($key.Key -eq [ConsoleKey]::Escape) {
                         Write-Host ""
-                        Write-Host "  │ [Paused] Cancel current operation?" -ForegroundColor Yellow
-                        $confirmCancel = Show-ArrowConfirm -Message "Cancel and return to menu?" -DefaultYes
-                        if ($confirmCancel) {
-                            try { $process.Kill() } catch {}
-                            Write-Host "  └─ Cancelled by user ────────────────────────────────" -ForegroundColor Yellow
-                            $duration = (Get-Date) - $startTime
+                        Write-Host "  │ [Paused]" -ForegroundColor Yellow
+                        
+                        # Use interrupt menu if available, otherwise fall back to simple confirm
+                        if (Get-Command Show-InterruptMenu -ErrorAction SilentlyContinue) {
+                            $interruptResult = Show-InterruptMenu -Context "Copilot is processing (Iteration $Iteration)"
                             
-                            # Cleanup temp file
-                            Remove-Item $promptFile -ErrorAction SilentlyContinue
-                            
-                            # Log cancellation
-                            if (Get-Command Write-LogCopilotCall -ErrorAction SilentlyContinue) {
-                                Write-LogCopilotCall -Action CANCELLED -Model $currentModel -PromptLength $promptLength -Duration $duration.TotalSeconds
-                            }
-                            
-                            return @{
-                                Success   = $false
-                                Output    = "Operation cancelled by user"
-                                Raw       = $null
-                                Duration  = $duration
-                                Cancelled = $true
+                            switch ($interruptResult) {
+                                'cancel' {
+                                    # Cancel instantly
+                                    try { $process.Kill() } catch {}
+                                    Write-Host "  └─ Cancelled by user ────────────────────────────────" -ForegroundColor Yellow
+                                    $duration = (Get-Date) - $startTime
+                                    
+                                    # Cleanup temp file
+                                    Remove-Item $promptFile -ErrorAction SilentlyContinue
+                                    
+                                    # Log cancellation
+                                    if (Get-Command Write-LogCopilotCall -ErrorAction SilentlyContinue) {
+                                        Write-LogCopilotCall -Action CANCELLED -Model $currentModel -PromptLength $promptLength -Duration $duration.TotalSeconds
+                                    }
+                                    
+                                    return @{
+                                        Success   = $false
+                                        Output    = "Operation cancelled by user"
+                                        Raw       = $null
+                                        Duration  = $duration
+                                        Cancelled = $true
+                                    }
+                                }
+                                'stop-after' {
+                                    # Finish this iteration, then stop - show banner and continue
+                                    Write-Host "  │ Loop will stop after this iteration completes" -ForegroundColor Cyan
+                                    Write-Host "  │ Resuming..." -ForegroundColor Gray
+                                }
+                                'continue' {
+                                    # Continue without interruption
+                                    Write-Host "  │ Resuming..." -ForegroundColor Gray
+                                }
                             }
                         } else {
-                            Write-Host "  │ Resuming..." -ForegroundColor Gray
+                            # Fallback to simple confirm
+                            $confirmCancel = Show-ArrowConfirm -Message "Cancel and return to menu?" -DefaultYes
+                            if ($confirmCancel) {
+                                try { $process.Kill() } catch {}
+                                Write-Host "  └─ Cancelled by user ────────────────────────────────" -ForegroundColor Yellow
+                                $duration = (Get-Date) - $startTime
+                                
+                                # Cleanup temp file
+                                Remove-Item $promptFile -ErrorAction SilentlyContinue
+                                
+                                # Log cancellation
+                                if (Get-Command Write-LogCopilotCall -ErrorAction SilentlyContinue) {
+                                    Write-LogCopilotCall -Action CANCELLED -Model $currentModel -PromptLength $promptLength -Duration $duration.TotalSeconds
+                                }
+                                
+                                return @{
+                                    Success   = $false
+                                    Output    = "Operation cancelled by user"
+                                    Raw       = $null
+                                    Duration  = $duration
+                                    Cancelled = $true
+                                }
+                            } else {
+                                Write-Host "  │ Resuming..." -ForegroundColor Gray
+                            }
                         }
                     }
                     
@@ -999,36 +1046,82 @@ function Invoke-CopilotInternal {
                 if ([Console]::KeyAvailable) {
                     $key = [Console]::ReadKey($true)
                     
-                    # ESC key - show cancellation confirmation
+                    # ESC key - show interrupt menu with 3 options
                     if ($key.Key -eq [ConsoleKey]::Escape) {
                         Stop-Spinner -FinalMessage "" -Success $false
                         Write-Host ""
-                        $confirmCancel = Show-ArrowConfirm -Message "Cancel current operation?" -DefaultYes
-                        if ($confirmCancel) {
-                            try { $process.Kill() } catch {}
-                            Write-Host "  Cancelled by user" -ForegroundColor Yellow
-                            Write-Host "$([char]27)[?25h" -NoNewline  # Show cursor
-                            $duration = (Get-Date) - $startTime
+                        
+                        # Use interrupt menu if available, otherwise fall back to simple confirm
+                        if (Get-Command Show-InterruptMenu -ErrorAction SilentlyContinue) {
+                            $interruptResult = Show-InterruptMenu -Context "Copilot is processing (Iteration $Iteration)"
                             
-                            # Cleanup
-                            Remove-Item $promptFile -ErrorAction SilentlyContinue
-                            
-                            # Log cancellation
-                            if (Get-Command Write-LogCopilotCall -ErrorAction SilentlyContinue) {
-                                Write-LogCopilotCall -Action CANCELLED -Model $currentModel -PromptLength $promptLength -Duration $duration.TotalSeconds
-                            }
-                            
-                            return @{
-                                Success   = $false
-                                Output    = "Operation cancelled by user"
-                                Raw       = $null
-                                Duration  = $duration
-                                Cancelled = $true
+                            switch ($interruptResult) {
+                                'cancel' {
+                                    # Cancel instantly
+                                    try { $process.Kill() } catch {}
+                                    Write-Host "  Cancelled by user" -ForegroundColor Yellow
+                                    Write-Host "$([char]27)[?25h" -NoNewline  # Show cursor
+                                    $duration = (Get-Date) - $startTime
+                                    
+                                    # Cleanup
+                                    Remove-Item $promptFile -ErrorAction SilentlyContinue
+                                    
+                                    # Log cancellation
+                                    if (Get-Command Write-LogCopilotCall -ErrorAction SilentlyContinue) {
+                                        Write-LogCopilotCall -Action CANCELLED -Model $currentModel -PromptLength $promptLength -Duration $duration.TotalSeconds
+                                    }
+                                    
+                                    return @{
+                                        Success   = $false
+                                        Output    = "Operation cancelled by user"
+                                        Raw       = $null
+                                        Duration  = $duration
+                                        Cancelled = $true
+                                    }
+                                }
+                                'stop-after' {
+                                    # Finish this iteration, then stop - show message and continue
+                                    Write-Host "  Loop will stop after this iteration completes" -ForegroundColor Cyan
+                                    # Resume spinner
+                                    $script:SpinnerActive = $true
+                                    $script:SpinnerMessage = "Copilot working... (stopping after this)"
+                                    Write-Host "$([char]27)[?25l" -NoNewline  # Hide cursor again
+                                }
+                                'continue' {
+                                    # Continue without interruption - resume spinner
+                                    $script:SpinnerActive = $true
+                                    Write-Host "$([char]27)[?25l" -NoNewline  # Hide cursor again
+                                }
                             }
                         } else {
-                            # Resume spinner
-                            $script:SpinnerActive = $true
-                            Write-Host "$([char]27)[?25l" -NoNewline  # Hide cursor again
+                            # Fallback to simple confirm
+                            $confirmCancel = Show-ArrowConfirm -Message "Cancel current operation?" -DefaultYes
+                            if ($confirmCancel) {
+                                try { $process.Kill() } catch {}
+                                Write-Host "  Cancelled by user" -ForegroundColor Yellow
+                                Write-Host "$([char]27)[?25h" -NoNewline  # Show cursor
+                                $duration = (Get-Date) - $startTime
+                                
+                                # Cleanup
+                                Remove-Item $promptFile -ErrorAction SilentlyContinue
+                                
+                                # Log cancellation
+                                if (Get-Command Write-LogCopilotCall -ErrorAction SilentlyContinue) {
+                                    Write-LogCopilotCall -Action CANCELLED -Model $currentModel -PromptLength $promptLength -Duration $duration.TotalSeconds
+                                }
+                                
+                                return @{
+                                    Success   = $false
+                                    Output    = "Operation cancelled by user"
+                                    Raw       = $null
+                                    Duration  = $duration
+                                    Cancelled = $true
+                                }
+                            } else {
+                                # Resume spinner
+                                $script:SpinnerActive = $true
+                                Write-Host "$([char]27)[?25l" -NoNewline  # Hide cursor again
+                            }
                         }
                     }
                     
@@ -2340,6 +2433,11 @@ function Invoke-Building {
         Save-PhaseCheckpoint -Phase 'building'
     }
     
+    # Reset interrupt state at start of build loop
+    if (Get-Command Reset-InterruptState -ErrorAction SilentlyContinue) {
+        Reset-InterruptState
+    }
+    
     Write-Host ""
     
     while ($true) {
@@ -2470,6 +2568,19 @@ function Invoke-Building {
                 # False positive - agent mentioned signal in explanation but tasks remain
                 Write-VerboseOutput "Completion signal detected but $($verifyStats.Pending) tasks remain - continuing" -Category "Build"
             }
+        }
+        
+        # Check if user requested to stop after this iteration
+        if ((Get-Command Test-StopAfterIteration -ErrorAction SilentlyContinue) -and (Test-StopAfterIteration)) {
+            Write-Ralph "Stopping loop as requested (completed iteration $Iteration)" -Type info
+            if (Get-Command Write-LogBuild -ErrorAction SilentlyContinue) {
+                Write-LogBuild -Action STOPPED -Iteration $script:Iteration -Details "User requested stop after iteration"
+            }
+            # Reset the interrupt state for next run
+            if (Get-Command Reset-InterruptState -ErrorAction SilentlyContinue) {
+                Reset-InterruptState
+            }
+            break
         }
         
         Start-Sleep -Seconds 2

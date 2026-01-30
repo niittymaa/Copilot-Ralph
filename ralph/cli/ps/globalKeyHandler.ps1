@@ -5,9 +5,10 @@
 .DESCRIPTION
     Provides centralized keyboard event handling with:
     - Double CTRL+C detection for graceful exit
-    - ESC as cancel/return (not exit)
+    - ESC triggers interrupt menu with 3 options
     - Consistent key action mapping
     - Global exit management
+    - Integration with interrupt handler
 
 .NOTES
     Part of the Ralph CLI Framework
@@ -23,6 +24,22 @@ $script:CtrlCThresholdMs = 2000  # 2 seconds to press CTRL+C twice
 $script:ExitRequested = $false
 
 # ═══════════════════════════════════════════════════════════════
+#                    INTERRUPT HANDLER INTEGRATION
+# ═══════════════════════════════════════════════════════════════
+
+# Load interrupt handler if available
+$script:InterruptHandlerLoaded = $false
+$interruptHandlerPath = Join-Path $PSScriptRoot 'interruptHandler.ps1'
+if (Test-Path $interruptHandlerPath) {
+    try {
+        . $interruptHandlerPath
+        $script:InterruptHandlerLoaded = $true
+    } catch {
+        $script:InterruptHandlerLoaded = $false
+    }
+}
+
+# ═══════════════════════════════════════════════════════════════
 #                    CTRL+C HANDLER
 # ═══════════════════════════════════════════════════════════════
 
@@ -33,6 +50,7 @@ function Initialize-GlobalKeyHandler {
     .DESCRIPTION
         Sets up CTRL+C handling to require double-press for exit.
         First CTRL+C is available for copy operations.
+        Also initializes interrupt handler state.
     #>
     param()
     
@@ -42,6 +60,11 @@ function Initialize-GlobalKeyHandler {
     # Reset state
     $script:LastCtrlCTime = [DateTime]::MinValue
     $script:ExitRequested = $false
+    
+    # Reset interrupt handler state if available
+    if ($script:InterruptHandlerLoaded -and (Get-Command Reset-InterruptState -ErrorAction SilentlyContinue)) {
+        Reset-InterruptState
+    }
     
     Write-Verbose "Global keyboard handler initialized"
 }
@@ -53,6 +76,11 @@ function Reset-CtrlCHandler {
     #>
     [Console]::TreatControlCAsInput = $false
     $script:ExitRequested = $false
+    
+    # Reset interrupt handler state if available
+    if ($script:InterruptHandlerLoaded -and (Get-Command Reset-InterruptState -ErrorAction SilentlyContinue)) {
+        Reset-InterruptState
+    }
 }
 
 function Test-DoubleCtrlC {
