@@ -115,16 +115,6 @@ resolve_smart_path() {
     fi
 }
 
-test_valid_path() {
-    local test_path="$1"
-    [[ -z "$test_path" ]] && return 1
-    
-    # Check for basic validity
-    local resolved
-    resolved=$(resolve_smart_path "$test_path")
-    [[ -n "$resolved" ]]
-}
-
 #endregion
 
 #region Argument Parsing

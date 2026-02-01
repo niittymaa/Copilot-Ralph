@@ -41,23 +41,53 @@ function Test-VenvExists {
 function Test-PythonAvailable {
     <#
     .SYNOPSIS
-        Check if Python is available on the system
+        Check if Python 3 is available on the system
+    .NOTES
+        Checks python3 first for consistency with Bash implementation.
+        This ensures Python 3 is preferred on systems with both Python 2 and 3.
     #>
+    # Try python3 first (preferred)
     try {
-        $version = python --version 2>&1
-        if ($version -match 'Python \d+\.\d+') {
+        $version = python3 --version 2>&1
+        if ($version -match 'Python 3\.\d+') {
             return $true
         }
     } catch {}
     
+    # Fall back to python, but verify it's Python 3
     try {
-        $version = python3 --version 2>&1
-        if ($version -match 'Python \d+\.\d+') {
+        $version = python --version 2>&1
+        if ($version -match 'Python 3\.\d+') {
             return $true
         }
     } catch {}
     
     return $false
+}
+
+function Get-PythonCommand {
+    <#
+    .SYNOPSIS
+        Get the Python command to use (python3 or python)
+    .NOTES
+        Returns python3 if available, otherwise python (if it's Python 3).
+        Consistent with Bash implementation.
+    #>
+    # Try python3 first (preferred)
+    try {
+        $null = python3 --version 2>&1
+        return 'python3'
+    } catch {}
+    
+    # Fall back to python, but verify it's Python 3
+    try {
+        $version = python --version 2>&1
+        if ($version -match 'Python 3\.\d+') {
+            return 'python'
+        }
+    } catch {}
+    
+    return $null
 }
 
 function Test-VenvNeeded {

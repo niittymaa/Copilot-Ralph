@@ -165,7 +165,7 @@ function Test-ModeValidation {
     # Test valid modes in ralph/ralph.ps1
     $ralphPs1 = Get-Content (Join-Path $RalphDir 'ralph.ps1') -Raw
     
-    Assert-Contains $ralphPs1 "ValidateSet('auto', 'plan', 'build', 'agents', 'continue', 'sessions')" "ralph.ps1 validates all modes"
+    Assert-Contains $ralphPs1 "ValidateSet('auto', 'plan', 'build', 'agents', 'continue', 'sessions', 'benchmark')" "ralph.ps1 validates all modes"
     Assert-Contains $ralphPs1 "'agents'" "ralph.ps1 supports agents mode"
     Assert-Contains $ralphPs1 "'continue'" "ralph.ps1 supports continue mode"
     

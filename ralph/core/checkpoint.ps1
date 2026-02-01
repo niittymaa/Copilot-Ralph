@@ -355,32 +355,6 @@ function Save-IterationCheckpoint {
     Save-Checkpoint -Checkpoint $checkpoint -TaskId $TaskId
 }
 
-function Save-ErrorCheckpoint {
-    <#
-    .SYNOPSIS
-        DEPRECATED - Do not use. Errors should not create new checkpoints.
-    .DESCRIPTION
-        When an error occurs, the last COMPLETED checkpoint is still valid.
-        Creating a checkpoint during error would save incomplete/invalid state.
-        This function is kept for backward compatibility but does nothing.
-    #>
-    param(
-        [hashtable]$ErrorInfo,
-        [string]$Phase = 'building',
-        [int]$Iteration = 0,
-        [string]$CurrentTask = '',
-        [string]$TaskId = $null
-    )
-    
-    # INTENTIONALLY DOES NOTHING
-    # The last completed checkpoint is still valid and should be used for resume
-    # Do not overwrite it with error state
-    
-    if (Get-Command Write-Log -ErrorAction SilentlyContinue) {
-        Write-Log -Tag 'DEBUG' -Message "Save-ErrorCheckpoint called but skipped - using last completed checkpoint instead"
-    }
-}
-
 function Save-CompletionCheckpoint {
     <#
     .SYNOPSIS

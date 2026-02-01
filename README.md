@@ -6,6 +6,9 @@ Autonomous AI coding agent framework for GitHub Copilot CLI using the Ralph Loop
 
 Ralph runs AI coding agents in continuous iterations—reading specs, creating plans, implementing tasks, validating, and continuing until complete. Each iteration uses fresh context to maintain AI performance.
 
+### Game demo built with Copilot Ralph:
+[![Ralph VideoPreview Demo](https://img.youtube.com/vi/MS8qW55yjXg/maxresdefault.jpg)](https://www.youtube.com/watch?v=MS8qW55yjXg)
+
 ---
 
 ## ⚠️ Disclaimer
@@ -77,7 +80,7 @@ First run auto-creates `.github/instructions/`, `.github/agents/`, and `.ralph/`
 ### Bash (Linux/macOS/WSL)
 
 Same functionality with different syntax:
-- `-m` for Mode
+- `-m` for Mode (e.g., `-m plan`, `-m build`, `-m agents`)
 - `-M` for Model
 - `-L` for ListModels
 - `-n` for MaxIterations

@@ -26,6 +26,17 @@ TASK_PROJECT_ROOT=""
 GLOBAL_SPECS_DIR=""
 GLOBAL_REFERENCES_DIR=""
 
+# Cross-platform date command (GNU date -Iseconds vs BSD date)
+get_iso_timestamp() {
+    if date -Iseconds &>/dev/null; then
+        # GNU date (Linux)
+        date -Iseconds
+    else
+        # BSD date (macOS)
+        date -u +"%Y-%m-%dT%H:%M:%S+00:00"
+    fi
+}
+
 initialize_task_paths() {
     local project_root="$1"
     TASK_PROJECT_ROOT="$project_root"
@@ -85,7 +96,8 @@ get_session_references_folder() {
 get_active_task_id() {
     if [[ -f "$ACTIVE_TASK_FILE" ]]; then
         local task_id
-        task_id=$(cat "$ACTIVE_TASK_FILE" | tr -d '[:space:]')
+        # Use < redirection instead of cat | for efficiency and safety
+        task_id=$(tr -d '[:space:]' < "$ACTIVE_TASK_FILE")
         if [[ -n "$task_id" ]] && task_exists "$task_id"; then
             echo "$task_id"
             return
@@ -203,13 +215,15 @@ create_task() {
     mkdir -p "$task_dir"
     
     # Create task config
+    local created_timestamp
+    created_timestamp=$(get_iso_timestamp)
     cat > "$task_dir/task.json" << EOF
 {
   "id": "$task_id",
   "name": "$name",
   "description": "$description",
   "specsMode": "$specs_mode",
-  "created": "$(date -Iseconds)",
+  "created": "$created_timestamp",
   "status": "active"
 }
 EOF

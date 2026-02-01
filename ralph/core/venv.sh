@@ -130,15 +130,15 @@ create_ralph_venv() {
     # Usage: create_ralph_venv [--force]
     # Respects RALPH_DRY_RUN environment variable
     local force=false
-    [[ "$1" == "--force" ]] && force=true
+    [[ "${1:-}" == "--force" ]] && force=true
     
     if [[ -z "$VENV_DIR" ]]; then
         venv_log "Error: Venv paths not initialized" "$VENV_RED"
         return 1
     fi
     
-    # Dry-run mode check
-    if [[ "$RALPH_DRY_RUN" == "true" ]]; then
+    # Dry-run mode check (use ${VAR:-} pattern for unset variable safety)
+    if [[ "${RALPH_DRY_RUN:-}" == "true" ]]; then
         venv_log "[DRY-RUN] Would create virtual environment at $VENV_DIR" "$VENV_YELLOW"
         return 0
     fi
@@ -195,8 +195,8 @@ enable_ralph_venv() {
         return 1
     fi
     
-    # Dry-run mode check
-    if [[ "$RALPH_DRY_RUN" == "true" ]]; then
+    # Dry-run mode check (use ${VAR:-} pattern for unset variable safety)
+    if [[ "${RALPH_DRY_RUN:-}" == "true" ]]; then
         venv_log "[DRY-RUN] Would activate virtual environment at $VENV_DIR" "$VENV_YELLOW"
         return 0
     fi
