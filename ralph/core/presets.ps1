@@ -199,6 +199,7 @@ function Show-PresetsMenu {
             Separator   = $false
             Condition   = $null
             Submenu     = $null
+            Disabled    = $true
         }
         
         foreach ($preset in $categoryGroup.Group) {

@@ -64,6 +64,20 @@ show_quit: false
 
 - separator: true
 
+- key: "8"
+  label: "📦 Apply preset template"
+  action: apply-preset
+  description: Use a pre-configured task template
+  color: Cyan
+
+- key: "9"
+  label: "🚀 New project boilerplate"
+  action: boilerplate-wizard
+  description: Create project starter structure
+  color: Yellow
+
+- separator: true
+
 - key: V
   label: View current specs
   action: view-specs

@@ -2843,6 +2843,12 @@ function Show-SpecsSettingsMenu {
     
     $items += New-RalphMenuSeparator
     
+    # Templates: Presets and Boilerplates
+    $items += New-RalphMenuItem -Key '8' -Label '📦 Apply preset template' -Action 'apply-preset' -Description 'Use a pre-configured task template' -Color 'Cyan'
+    $items += New-RalphMenuItem -Key '9' -Label '🚀 New project boilerplate' -Action 'boilerplate-wizard' -Description 'Create project starter structure' -Color 'Yellow'
+    
+    $items += New-RalphMenuSeparator
+    
     # View specs
     if ($HasSpecs) {
         $items += New-RalphMenuItem -Key 'V' -Label 'View current specs' -Action 'view-specs' -Description 'List configured spec files' -Color 'White'

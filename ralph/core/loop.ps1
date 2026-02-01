@@ -2120,6 +2120,60 @@ function Start-SpecsSettingsWorkflow {
                 Write-Host "  Press any key to continue..." -ForegroundColor DarkGray
                 $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
             }
+            'apply-preset' {
+                # Show preset selection menu and apply selected preset
+                if (Get-Command Show-PresetsMenu -ErrorAction SilentlyContinue) {
+                    $presetId = Show-PresetsMenu
+                    if ($presetId) {
+                        # Get specs folder for this task
+                        $specsFolder = Get-TaskSpecsFolder -TaskId $TaskId
+                        if (-not $specsFolder) {
+                            # If no specs folder configured, use session specs
+                            Set-TaskSpecsConfig -TaskId $TaskId -SpecsSource 'session' -SpecsFolder ''
+                            $specsFolder = Get-SessionSpecsFolder -TaskId $TaskId
+                            if ($specsFolder -and -not (Test-Path $specsFolder)) {
+                                New-Item -ItemType Directory -Path $specsFolder -Force | Out-Null
+                            }
+                        }
+                        
+                        if ($specsFolder) {
+                            $applied = Apply-Preset -PresetId $presetId -TaskSpecsDir $specsFolder
+                            if ($applied) {
+                                Write-Host "  ✓ Preset applied successfully" -ForegroundColor Green
+                            } else {
+                                Write-Host "  ✗ Failed to apply preset" -ForegroundColor Red
+                            }
+                        } else {
+                            Write-Host "  ✗ Could not determine specs folder" -ForegroundColor Red
+                        }
+                        Start-Sleep -Seconds 2
+                    }
+                } else {
+                    Write-Host "  ⚠ Presets module not loaded" -ForegroundColor Yellow
+                    Start-Sleep -Seconds 2
+                }
+            }
+            'boilerplate-wizard' {
+                # Start the boilerplate wizard
+                if (Get-Command Start-BoilerplateWizard -ErrorAction SilentlyContinue) {
+                    $wizardResult = Start-BoilerplateWizard -ProjectRoot $script:ProjectRoot
+                    if ($wizardResult) {
+                        # Wizard completed, check if it created a spec
+                        if ($wizardResult.SpecPath -and (Test-Path $wizardResult.SpecPath)) {
+                            Write-Host "  ✓ Boilerplate spec created: $($wizardResult.SpecPath)" -ForegroundColor Green
+                            
+                            # Configure specs to use the folder where the spec was created
+                            $specFolder = Split-Path $wizardResult.SpecPath -Parent
+                            Set-TaskSpecsConfig -TaskId $TaskId -SpecsSource 'custom' -SpecsFolder $specFolder
+                            $script:SpecsDir = $specFolder
+                        }
+                        Start-Sleep -Seconds 2
+                    }
+                } else {
+                    Write-Host "  ⚠ Boilerplate wizard module not loaded" -ForegroundColor Yellow
+                    Start-Sleep -Seconds 2
+                }
+            }
             default {
                 continue
             }
