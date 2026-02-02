@@ -2,6 +2,8 @@
 
 ![Ralph](ralph/COPILOT-RALPH.jpg)
 
+*"Me fail English? That's unpossible!"* — Ralph Wiggum
+
 Autonomous AI coding agent framework for GitHub Copilot CLI using the Ralph Loop methodology.
 
 Ralph runs AI coding agents in continuous iterations—reading specs, creating plans, implementing tasks, validating, and continuing until complete. Each iteration uses fresh context to maintain AI performance.
