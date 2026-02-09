@@ -1840,19 +1840,23 @@ function Start-ReferenceSettingsWorkflow {
         
         switch ($result.Action) {
             'continue' {
-                # Copy all reference files to session-references folder
+                # Copy only explicit files to session-references folder
+                # Directory-sourced files are already accessible via referenceDirectories in task.json
                 $allRefs = @(Get-AllSessionReferences)
-                if ($allRefs.Count -gt 0) {
+                $explicitRefs = @($allRefs | Where-Object { $_.Source -eq 'Explicit' })
+                if ($explicitRefs.Count -gt 0) {
                     Write-Host ""
                     Write-Host "  Copying references to session folder..." -ForegroundColor Cyan
                     
-                    foreach ($ref in $allRefs) {
+                    foreach ($ref in $explicitRefs) {
                         $destFile = Join-Path $sessionRefsFolder $ref.Name
                         if (-not (Test-Path $destFile)) {
                             Copy-Item -Path $ref.Path -Destination $destFile -Force -ErrorAction SilentlyContinue
                         }
                     }
-                    
+                }
+                
+                if ($allRefs.Count -gt 0) {
                     # Ensure referencesSource is set to 'session'
                     Set-TaskReferencesConfig -TaskId $TaskId -ReferencesSource 'session'
                     Write-Host "  ✓ References configured" -ForegroundColor Green
@@ -1863,16 +1867,20 @@ function Start-ReferenceSettingsWorkflow {
                 return
             }
             'back' {
-                # Copy all reference files to session-references folder
+                # Copy only explicit files to session-references folder
+                # Directory-sourced files are already accessible via referenceDirectories in task.json
                 $allRefs = @(Get-AllSessionReferences)
-                if ($allRefs.Count -gt 0) {
-                    foreach ($ref in $allRefs) {
+                $explicitRefs = @($allRefs | Where-Object { $_.Source -eq 'Explicit' })
+                if ($explicitRefs.Count -gt 0) {
+                    foreach ($ref in $explicitRefs) {
                         $destFile = Join-Path $sessionRefsFolder $ref.Name
                         if (-not (Test-Path $destFile)) {
                             Copy-Item -Path $ref.Path -Destination $destFile -Force -ErrorAction SilentlyContinue
                         }
                     }
-                    
+                }
+                
+                if ($allRefs.Count -gt 0) {
                     # Ensure referencesSource is set to 'session'
                     Set-TaskReferencesConfig -TaskId $TaskId -ReferencesSource 'session'
                 }
