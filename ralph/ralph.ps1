@@ -272,6 +272,8 @@ if ($ListModels) {
     Write-Host "    claude-sonnet-4.5    - Claude Sonnet 4.5 (recommended)" -ForegroundColor Gray
     Write-Host "    claude-sonnet-4      - Claude Sonnet 4" -ForegroundColor Gray
     Write-Host "    claude-haiku-4.5     - Claude Haiku 4.5 (fast/cheap)" -ForegroundColor Gray
+    Write-Host "    claude-opus-4.6      - Claude Opus 4.6 (premium)" -ForegroundColor Gray
+    Write-Host "    claude-opus-4.6-fast - Claude Opus 4.6 fast mode (premium)" -ForegroundColor Gray
     Write-Host "    claude-opus-4.5      - Claude Opus 4.5 (premium)" -ForegroundColor Gray
     Write-Host ""
     Write-Host "  OpenAI GPT:" -ForegroundColor White

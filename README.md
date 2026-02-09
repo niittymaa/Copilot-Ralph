@@ -373,6 +373,8 @@ your-project/
 | Anthropic | claude-sonnet-4.5 | Default |
 | Anthropic | claude-sonnet-4 | Standard |
 | Anthropic | claude-haiku-4.5 | Fast/cheap |
+| Anthropic | claude-opus-4.6 | Premium |
+| Anthropic | claude-opus-4.6-fast | Premium |
 | Anthropic | claude-opus-4.5 | Premium |
 | OpenAI | gpt-5.2-codex | Standard |
 | OpenAI | gpt-5.1-codex | Standard |

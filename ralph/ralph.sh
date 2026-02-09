@@ -204,6 +204,8 @@ show_models() {
     echo -e "${GRAY}    claude-sonnet-4.5    - Claude Sonnet 4.5 (recommended)${NC}"
     echo -e "${GRAY}    claude-sonnet-4      - Claude Sonnet 4${NC}"
     echo -e "${GRAY}    claude-haiku-4.5     - Claude Haiku 4.5 (fast/cheap)${NC}"
+    echo -e "${GRAY}    claude-opus-4.6      - Claude Opus 4.6 (premium)${NC}"
+    echo -e "${GRAY}    claude-opus-4.6-fast - Claude Opus 4.6 fast mode (premium)${NC}"
     echo -e "${GRAY}    claude-opus-4.5      - Claude Opus 4.5 (premium)${NC}"
     echo ""
     echo -e "${WHITE}  OpenAI GPT:${NC}"

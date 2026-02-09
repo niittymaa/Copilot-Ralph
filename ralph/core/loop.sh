@@ -47,9 +47,9 @@ VENV_MODE="auto"
 DEFAULT_MODEL="claude-sonnet-4.5"
 
 # Available models with multipliers
-declare -a MODEL_NAMES=("claude-sonnet-4.5" "claude-haiku-4.5" "claude-opus-4.5" "claude-sonnet-4" "gpt-5.2-codex" "gpt-5.1-codex-max" "gpt-5.1-codex" "gpt-5.2" "gpt-5.1" "gpt-5" "gpt-5.1-codex-mini" "gpt-5-mini" "gpt-4.1" "gemini-3-pro-preview")
-declare -a MODEL_DISPLAYS=("Claude Sonnet 4.5" "Claude Haiku 4.5" "Claude Opus 4.5" "Claude Sonnet 4" "GPT-5.2-Codex" "GPT-5.1-Codex-Max" "GPT-5.1-Codex" "GPT-5.2" "GPT-5.1" "GPT-5" "GPT-5.1-Codex-Mini" "GPT-5 mini" "GPT-4.1" "Gemini 3 Pro (Preview)")
-declare -a MODEL_MULTIPLIERS=("1x" "0.33x" "3x" "1x" "1x" "1x" "1x" "1x" "1x" "1x" "0.33x" "0x" "0x" "1x")
+declare -a MODEL_NAMES=("claude-sonnet-4.5" "claude-haiku-4.5" "claude-opus-4.6" "claude-opus-4.6-fast" "claude-opus-4.5" "claude-sonnet-4" "gpt-5.2-codex" "gpt-5.1-codex-max" "gpt-5.1-codex" "gpt-5.2" "gpt-5.1" "gpt-5" "gpt-5.1-codex-mini" "gpt-5-mini" "gpt-4.1" "gemini-3-pro-preview")
+declare -a MODEL_DISPLAYS=("Claude Sonnet 4.5" "Claude Haiku 4.5" "Claude Opus 4.6" "Claude Opus 4.6 (fast)" "Claude Opus 4.5" "Claude Sonnet 4" "GPT-5.2-Codex" "GPT-5.1-Codex-Max" "GPT-5.1-Codex" "GPT-5.2" "GPT-5.1" "GPT-5" "GPT-5.1-Codex-Mini" "GPT-5 mini" "GPT-4.1" "Gemini 3 Pro (Preview)")
+declare -a MODEL_MULTIPLIERS=("1x" "0.33x" "3x" "3x" "3x" "1x" "1x" "1x" "1x" "1x" "1x" "1x" "0.33x" "0x" "0x" "1x")
 
 # Function to show model selection menu
 show_model_menu() {
@@ -167,6 +167,8 @@ list_models() {
     echo -e "\033[0;90m    claude-sonnet-4.5    - Claude Sonnet 4.5 (Ralph default, 1x)\033[0m"
     echo -e "\033[0;90m    claude-sonnet-4      - Claude Sonnet 4 (1x)\033[0m"
     echo -e "\033[0;90m    claude-haiku-4.5     - Claude Haiku 4.5 (0.33x)\033[0m"
+    echo -e "\033[0;90m    claude-opus-4.6      - Claude Opus 4.6 (3x)\033[0m"
+    echo -e "\033[0;90m    claude-opus-4.6-fast - Claude Opus 4.6 fast mode (3x)\033[0m"
     echo -e "\033[0;90m    claude-opus-4.5      - Claude Opus 4.5 (3x)\033[0m"
     echo ""
     echo -e "\033[1;37m  OpenAI GPT:\033[0m"

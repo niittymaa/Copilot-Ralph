@@ -372,6 +372,8 @@ $script:EffectiveMaxIterations = 0
 $script:AvailableModels = @(
     @{ Name = 'claude-sonnet-4.5'; Display = 'Claude Sonnet 4.5'; Multiplier = '1x'; Default = $true }
     @{ Name = 'claude-haiku-4.5'; Display = 'Claude Haiku 4.5'; Multiplier = '0.33x'; Default = $false }
+    @{ Name = 'claude-opus-4.6'; Display = 'Claude Opus 4.6'; Multiplier = '3x'; Default = $false }
+    @{ Name = 'claude-opus-4.6-fast'; Display = 'Claude Opus 4.6 (fast)'; Multiplier = '3x'; Default = $false }
     @{ Name = 'claude-opus-4.5'; Display = 'Claude Opus 4.5'; Multiplier = '3x'; Default = $false }
     @{ Name = 'claude-sonnet-4'; Display = 'Claude Sonnet 4'; Multiplier = '1x'; Default = $false }
     @{ Name = 'gpt-5.2-codex'; Display = 'GPT-5.2-Codex'; Multiplier = '1x'; Default = $false }
