@@ -4,37 +4,35 @@
 
 Reference files are **supporting materials** that help Ralph understand your project context. Unlike specs (which define WHAT to build), references provide context, examples, and visual guidance.
 
-## Supported Reference Types
+## All File Types Accepted
+
+Ralph accepts **any file type** in the references folder. You can put anything here — individual files, subfolders, or entire codebases. Ralph will recursively explore everything.
 
 ### 🖼️ Images
 - **UI mockups** - Sketches, wireframes, or designs of the interface
 - **Architecture diagrams** - System design, data flow, component relationships
 - **Screenshots** - Examples from existing apps or competitors
-- **Inspiration** - Visual references for design style
-
-**Supported formats**: `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.bmp`, `.svg`
+- Formats like `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.bmp`, `.svg` are analyzed visually
 
 ### 📄 Documentation
 - **API documentation** - Existing API specs you want to integrate with
 - **Style guides** - Design systems, branding guidelines
 - **README files** - Context about the project
-- **Meeting notes** - Discussions about requirements
-
-**Supported formats**: `.md`, `.txt`
+- Formats like `.md`, `.txt` are inlined into the prompt
 
 ### 📊 Data Files
 - **JSON/YAML** - Configuration examples, data schemas
 - **CSV** - Sample data, user lists
-- **XML** - Legacy formats, configurations
+- Formats like `.json`, `.yaml`, `.yml`, `.xml`, `.csv` are parsed and inlined
 
-**Supported formats**: `.json`, `.yaml`, `.yml`, `.xml`, `.csv`
-
-### 💻 Code Samples
+### 💻 Code & Projects
 - **Example implementations** - Reference code from other projects
-- **Code snippets** - Patterns or utilities to follow
-- **Third-party examples** - How libraries are used
+- **Entire codebases** - Put a whole project folder here and Ralph will explore it
+- **Any programming language** - `.py`, `.js`, `.ts`, `.cs`, `.java`, `.go`, `.rs`, `.html`, `.css`, `.vue`, `.jsx`, `.tsx`, etc.
 
-**Supported formats**: `.ps1`, `.py`, `.js`, `.ts`, `.cs`, `.java`, `.go`, etc.
+### 📎 Any Other Files
+- **Any extension works** - Ralph reads unknown file types as text
+- **Subfolders supported** - Nest files however you want
 
 ## Usage Examples
 
@@ -47,44 +45,53 @@ ralph/references/
 ```
 Ralph will analyze these images and understand the UI structure, layout patterns, and visual design when creating implementation specs.
 
-### Example 2: API Integration
+### Example 2: Reference Codebase
 ```
 ralph/references/
-├── stripe-api-docs.md
-├── auth-flow-diagram.png
-└── example-api-response.json
+└── existing-app/
+    ├── src/
+    │   ├── components/
+    │   │   ├── Header.tsx
+    │   │   └── Sidebar.tsx
+    │   ├── utils/
+    │   │   └── helpers.ts
+    │   └── App.tsx
+    ├── package.json
+    └── README.md
 ```
-Ralph will use these to understand the API structure and integration requirements.
+Ralph will explore the codebase structure, understand patterns, and use them as reference for building similar features.
 
-### Example 3: Design System
+### Example 3: Mixed References
 ```
 ralph/references/
-├── design-system.md
-├── color-palette.png
-├── component-library.md
-└── typography-guide.md
+├── api-docs/
+│   ├── endpoints.md
+│   └── auth-flow.yaml
+├── design/
+│   ├── mockup.png
+│   └── color-palette.svg
+└── sample-data.json
 ```
-Ralph will follow the design system guidelines when generating UI code.
+Ralph will use all of these — browsing folders, reading docs, analyzing images, and parsing data files.
 
 ## Best Practices
 
 ### ✅ Do
-- **Organize by purpose** - Group related references together
+- **Put anything relevant** - Files, folders, entire projects
 - **Use clear filenames** - `user-registration-flow.png` instead of `image1.png`
+- **Organize with subfolders** - Group related references together
 - **Include context** - Add a README.md explaining the references
-- **Keep it relevant** - Only include files that help understand the project
 
 ### ❌ Don't
 - **Mix specs and references** - Keep specs in `spec/` or `specs/` folders
-- **Use template files here** - This folder is for actual reference materials
 - **Include private/sensitive data** - Be cautious with production data or secrets
-- **Upload huge files** - Optimize images, use reasonable file sizes
+- **Use template files here** - This folder is for actual reference materials
 
 ## Working Without Specs
 
 Ralph can work with **references only**! If you provide:
 - UI mockup images
-- Example code
+- Example code or projects
 - Documentation
 
 Ralph will:
@@ -101,9 +108,9 @@ This is great for:
 ## Getting Started
 
 1. **Delete this file** when you add your own references
-2. **Add your reference files** to this folder
+2. **Add your reference files** to this folder (any files, any subfolders)
 3. **Run Ralph** and select "Use default references folder"
-4. Ralph will analyze all files and use them as context
+4. Ralph will discover all files and use them as context
 
 ---
 

@@ -2092,6 +2092,7 @@ function Show-ReferencesMenu {
         }
         if ($CategorySummary['StructuredData']) { $summaryParts += "$($CategorySummary['StructuredData']) data" }
         if ($CategorySummary['Code']) { $summaryParts += "$($CategorySummary['Code']) code" }
+        if ($CategorySummary['Other']) { $summaryParts += "$($CategorySummary['Other']) other" }
         
         $summaryStr = if ($summaryParts.Count -gt 0) { $summaryParts -join ', ' } else { "$ReferenceCount files" }
         
@@ -2118,7 +2119,7 @@ function Show-ReferencesMenu {
     }
     
     $items += New-RalphMenuSeparator
-    $items += New-RalphMenuItem -Key 'I' -Label 'Supported file types' -Action 'show-types' -Description 'Show all supported formats' -Color 'Gray'
+    $items += New-RalphMenuItem -Key 'I' -Label 'Reference file types' -Action 'show-types' -Description 'How different file types are handled' -Color 'Gray'
     
     $description = if ($HasReferences) { "$ReferenceCount files registered" } else { "Add reference materials (images, docs, etc.)" }
     
@@ -2164,6 +2165,7 @@ function Show-ReferenceConfirmationMenu {
             'StructuredData' { '📊' }
             'Code' { '💻' }
             'Markdown' { '📝' }
+            'Other' { '📎' }
             default { '📄' }
         }
         Write-Host "  $icon $cat ($($byCategory[$cat].Count) files)" -ForegroundColor Cyan
@@ -2184,28 +2186,43 @@ function Show-ReferenceConfirmationMenu {
 function Show-SupportedFileTypesMenu {
     <#
     .SYNOPSIS
-        Displays all supported file types
+        Displays file type handling information
     #>
     Write-Host ""
     Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-    Write-Host "  SUPPORTED FILE TYPES" -ForegroundColor White
+    Write-Host "  REFERENCE FILE TYPES" -ForegroundColor White
     Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
     Write-Host ""
     
+    Write-Host "  ✅ ALL file types are accepted" -ForegroundColor Green
+    Write-Host "     Put anything in the references folder — files, subfolders," -ForegroundColor Gray
+    Write-Host "     entire codebases. Ralph will explore everything." -ForegroundColor Gray
+    Write-Host ""
+    
     Write-Host "  📄 Text & Markdown" -ForegroundColor Yellow
-    Write-Host "     .md, .txt, .text, .markdown" -ForegroundColor Gray
+    Write-Host "     .md, .txt, .text, .markdown — inlined into prompt" -ForegroundColor Gray
     Write-Host ""
     
     Write-Host "  📊 Structured Data" -ForegroundColor Yellow
-    Write-Host "     .json, .yaml, .yml, .toml, .xml, .csv, .ini" -ForegroundColor Gray
+    Write-Host "     .json, .yaml, .yml, .toml, .xml, .csv, .ini — parsed and inlined" -ForegroundColor Gray
     Write-Host ""
     
     Write-Host "  💻 Code" -ForegroundColor Yellow
-    Write-Host "     .ps1, .py, .js, .ts, .cs, .java, .go, .rb, .php, .swift, .kt, .rs, .sql" -ForegroundColor Gray
+    Write-Host "     .ps1, .py, .js, .ts, .cs, .java, .go, .rb, .php, etc. — inlined as code" -ForegroundColor Gray
     Write-Host ""
     
-    Write-Host "  🖼️  Images (for UI analysis)" -ForegroundColor Yellow
-    Write-Host "     .png, .jpg, .jpeg, .gif, .webp, .bmp, .svg" -ForegroundColor Gray
+    Write-Host "  🖼️  Images" -ForegroundColor Yellow
+    Write-Host "     .png, .jpg, .jpeg, .gif, .webp, .bmp, .svg — analyzed visually" -ForegroundColor Gray
+    Write-Host ""
+    
+    Write-Host "  📎 Other files" -ForegroundColor Yellow
+    Write-Host "     Any other extension — read as text, Ralph explores as needed" -ForegroundColor Gray
+    Write-Host ""
+    
+    Write-Host "  📁 Subfolders" -ForegroundColor Yellow
+    Write-Host "     Fully supported — add entire projects or codebases as references." -ForegroundColor Gray
+    Write-Host "     For large reference sets, Ralph explores directories on demand" -ForegroundColor Gray
+    Write-Host "     instead of reading everything upfront." -ForegroundColor Gray
     Write-Host ""
     
     Write-Host "  Press any key to continue..." -ForegroundColor DarkGray

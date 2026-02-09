@@ -4,15 +4,17 @@
 
 .DESCRIPTION
     Provides comprehensive reference handling including:
-    - Multi-directory reference discovery
-    - Support for text, structured data, and images
-    - Path-based reference handling (no file caching)
+    - Multi-directory reference discovery (recursive, all file types)
+    - Categorization of known types (text, structured data, code, images)
+    - Unknown file types accepted as 'Other' (read as text)
+    - Smart prompt building: inlines small sets, provides directory listing for large/nested sets
     - Session-aware reference tracking
-    - Unified content merging for AI analysis
 
 .NOTES
     References are stored as paths only - files are read during analysis
     and results are stored, not the raw files themselves.
+    For large reference sets (subfolders, codebases), Ralph explores
+    directories on demand using its own tools.
 #>
 
 # ═══════════════════════════════════════════════════════════════
@@ -26,7 +28,7 @@ $script:ReferencePaths = @{
     RalphDir             = $null
 }
 
-# Supported file types by category
+# Known file types by category (files not matching any category are treated as 'Other')
 $script:SupportedFileTypes = @{
     Text = @{
         Extensions = @('.md', '.txt', '.text')
@@ -143,7 +145,7 @@ function Get-FileCategory {
     .PARAMETER Path
         File path to check
     .OUTPUTS
-        Category name or $null if not supported
+        Category name (Text, Markdown, StructuredData, Code, Image, or Other)
     #>
     param(
         [Parameter(Mandatory)]
@@ -169,24 +171,26 @@ function Get-FileCategory {
         }
     }
     
-    return $null
+    # Any unrecognized extension is treated as generic "Other" (read as text)
+    return 'Other'
 }
 
 function Test-SupportedFile {
     <#
     .SYNOPSIS
-        Tests if a file is a supported reference type
+        Tests if a file can be used as a reference (always true — all file types accepted)
     .PARAMETER Path
         File path to check
     .OUTPUTS
-        Boolean - true if supported
+        Boolean - always true
     #>
     param(
         [Parameter(Mandatory)]
         [string]$Path
     )
     
-    return $null -ne (Get-FileCategory -Path $Path)
+    # All files are supported - known types get specific handling, others are read as text
+    return $true
 }
 
 function Test-ImageFile {
@@ -344,11 +348,13 @@ function Get-FileClassification {
 function Get-ReferenceFilesFromDirectory {
     <#
     .SYNOPSIS
-        Gets all supported reference files from a directory
+        Gets all reference files from a directory, recursively scanning all subfolders
+    .DESCRIPTION
+        Accepts any file type. Known extensions get categorized (Text, Image, Code, etc.),
+        unknown extensions are categorized as 'Other' and read as text.
+        Always recurses into subdirectories to support whole codebases as references.
     .PARAMETER Directory
         Directory to scan
-    .PARAMETER Recurse
-        Whether to scan subdirectories
     .PARAMETER IncludeClassification
         Whether to include spec/reference classification for markdown files
     .PARAMETER FolderType
@@ -359,8 +365,6 @@ function Get-ReferenceFilesFromDirectory {
     param(
         [Parameter(Mandatory)]
         [string]$Directory,
-        
-        [switch]$Recurse,
         
         [switch]$IncludeClassification,
         
@@ -376,57 +380,36 @@ function Get-ReferenceFilesFromDirectory {
         $FolderType = Get-FolderType -Path $Directory
     }
     
-    # Ensure SupportedFileTypes is available (fallback if script scope lost)
-    if (-not $script:SupportedFileTypes) {
-        $script:SupportedFileTypes = @{
-            Text = @{ Extensions = @('.md', '.txt', '.text') }
-            Markdown = @{ Extensions = @('.md', '.markdown') }
-            StructuredData = @{ Extensions = @('.json', '.yaml', '.yml', '.toml', '.xml', '.csv', '.ini') }
-            Code = @{ Extensions = @('.ps1', '.py', '.js', '.ts', '.cs', '.java', '.go', '.rb', '.php', '.swift', '.kt', '.rs', '.sql') }
-            Image = @{ Extensions = @('.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.svg') }
-        }
-    }
-    
-    $allExtensions = @()
-    foreach ($category in $script:SupportedFileTypes.Values) {
-        $allExtensions += $category.Extensions
-    }
-    
     $files = @()
     $searchParams = @{
         Path = $Directory
         File = $true
+        Recurse = $true
         ErrorAction = 'SilentlyContinue'
-    }
-    if ($Recurse) {
-        $searchParams.Recurse = $true
     }
     
     $foundFiles = Get-ChildItem @searchParams
     
     foreach ($file in $foundFiles) {
-        $ext = $file.Extension.ToLower()
-        if ($ext -in $allExtensions) {
-            # Skip template files starting with underscore
-            if (-not $file.Name.StartsWith('_')) {
-                $category = Get-FileCategory -Path $file.FullName
-                $classification = if ($IncludeClassification) { 
-                    Get-FileClassification -Path $file.FullName -FolderType $FolderType 
-                } else { 
-                    $null 
-                }
-                
-                $files += @{
-                    Path           = $file.FullName
-                    Name           = $file.Name
-                    Extension      = $ext
-                    Category       = $category
-                    Size           = $file.Length
-                    IsImage        = $category -eq 'Image'
-                    IsSpec         = $classification -eq 'spec'
-                    Classification = $classification
-                    RelativePath   = $file.FullName.Replace($script:ReferencePaths.ProjectRoot, '').TrimStart('\', '/')
-                }
+        # Skip template files starting with underscore
+        if (-not $file.Name.StartsWith('_')) {
+            $category = Get-FileCategory -Path $file.FullName
+            $classification = if ($IncludeClassification) { 
+                Get-FileClassification -Path $file.FullName -FolderType $FolderType 
+            } else { 
+                $null 
+            }
+            
+            $files += @{
+                Path           = $file.FullName
+                Name           = $file.Name
+                Extension      = $file.Extension.ToLower()
+                Category       = $category
+                Size           = $file.Length
+                IsImage        = $category -eq 'Image'
+                IsSpec         = $classification -eq 'spec'
+                Classification = $classification
+                RelativePath   = $file.FullName.Replace($script:ReferencePaths.ProjectRoot, '').TrimStart('\', '/')
             }
         }
     }
@@ -459,7 +442,6 @@ function Get-AllSessionReferences {
     #>
     $allFiles = @()
     $seenPaths = @{}
-    $seenNames = @{}  # Track filenames to de-duplicate across directories
     
     # Ensure session references is initialized
     if (-not $script:SessionReferences) {
@@ -482,7 +464,6 @@ function Get-AllSessionReferences {
                 foreach ($file in $sessionFiles) {
                     if (-not $seenPaths.ContainsKey($file.Path)) {
                         $seenPaths[$file.Path] = $true
-                        $seenNames[$file.Name] = $true  # Track by filename
                         $file.Source = 'SessionFolder'
                         $file.SourcePath = $sessionRefsFolder
                         $file.SourceFolderType = 'reference'
@@ -505,10 +486,9 @@ function Get-AllSessionReferences {
         if (Test-Path $dir) {
             $dirFiles = Get-ReferenceFilesFromDirectory -Directory $dir -FolderType $folderType
             foreach ($file in $dirFiles) {
-                # Skip if already seen by path OR by filename (de-duplicate copies)
-                if (-not $seenPaths.ContainsKey($file.Path) -and -not $seenNames.ContainsKey($file.Name)) {
+                # De-duplicate by full path only (allows same filename in different subfolders)
+                if (-not $seenPaths.ContainsKey($file.Path)) {
                     $seenPaths[$file.Path] = $true
-                    $seenNames[$file.Name] = $true
                     $file.Source = 'Directory'
                     $file.SourcePath = $dir
                     $file.SourceFolderType = $folderType
@@ -520,11 +500,9 @@ function Get-AllSessionReferences {
     
     # Add explicitly registered files
     foreach ($filePath in @($script:SessionReferences.Files)) {
-        $fileName = Split-Path -Leaf $filePath
-        # Skip if already seen by path OR by filename
-        if ((Test-Path $filePath) -and -not $seenPaths.ContainsKey($filePath) -and -not $seenNames.ContainsKey($fileName)) {
+        # De-duplicate by full path only
+        if ((Test-Path $filePath) -and -not $seenPaths.ContainsKey($filePath)) {
             $seenPaths[$filePath] = $true
-            $seenNames[$fileName] = $true
             $category = Get-FileCategory -Path $filePath
             $fileInfo = Get-Item $filePath
             $allFiles += @{
@@ -868,10 +846,6 @@ function Read-ReferenceContent {
     
     $category = Get-FileCategory -Path $Path
     
-    if (-not $category) {
-        return @{ Success = $false; Error = 'Unsupported file type' }
-    }
-    
     $result = switch ($category) {
         'Image' { Read-ImageContent -Path $Path }
         'StructuredData' { Read-StructuredContent -Path $Path }
@@ -894,9 +868,10 @@ function Build-ReferenceAnalysisPrompt {
     .SYNOPSIS
         Builds a unified prompt for AI analysis of all references
     .DESCRIPTION
-        Combines text specs, structured data, and image paths
-        into a single comprehensive prompt for the AI planner.
-        Images are referenced by path - the AI will read them using its tools.
+        For small reference sets (few files, no deep subfolders), inlines content directly.
+        For larger sets (subfolders, codebases, many files), provides directory listing
+        and instructs the AI to explore using its own tools (view, grep, glob).
+        Images are always referenced by path for the AI to read.
     .PARAMETER References
         Array of reference file objects
     .OUTPUTS
@@ -911,7 +886,82 @@ function Build-ReferenceAnalysisPrompt {
     $textSpecs = @()
     $structuredData = @()
     $images = @()
+    $otherFiles = @()
     
+    # Detect if references contain deep subfolder structures (e.g., whole codebases)
+    $hasSubfolders = $false
+    $uniqueDirs = @{}
+    foreach ($ref in $References) {
+        $relDir = Split-Path $ref.RelativePath -Parent
+        if ($relDir -and $relDir -ne '.') {
+            # Check for nested subdirectories (more than one level deep from reference root)
+            $parts = $relDir -split '[\\/]'
+            if ($parts.Count -gt 2) {
+                $hasSubfolders = $true
+            }
+            $uniqueDirs[$relDir] = $true
+        }
+    }
+    
+    # If there are many files or deep subfolders, use directory-based exploration
+    $useExploreMode = $hasSubfolders -or $References.Count -gt 30
+    
+    if ($useExploreMode) {
+        # Collect unique reference source directories
+        $sourceDirs = @{}
+        foreach ($ref in $References) {
+            if ($ref.SourcePath) {
+                $sourceDirs[$ref.SourcePath] = $true
+            }
+        }
+        
+        # Separate images (always list individually) from the rest
+        $imageRefs = @($References | Where-Object { $_.IsImage })
+        $nonImageRefs = @($References | Where-Object { -not $_.IsImage })
+        
+        $promptParts += "## Reference Materials (Directory-Based)"
+        $promptParts += ""
+        $promptParts += "The user has provided reference directories containing **$($References.Count) files** across subfolders."
+        $promptParts += "These may include entire codebases, documentation trees, or project structures."
+        $promptParts += ""
+        $promptParts += "### Reference Directories to Explore:"
+        $promptParts += ""
+        foreach ($dir in $sourceDirs.Keys) {
+            $promptParts += "- ``$dir``"
+        }
+        $promptParts += ""
+        $promptParts += "### How to Use These References:"
+        $promptParts += ""
+        $promptParts += "1. **Use the view tool** to browse directory structure and read files as needed"
+        $promptParts += "2. **Use grep/glob** to search for specific patterns, functions, or components"
+        $promptParts += "3. **Explore recursively** - references may contain subfolders with relevant code, configs, and docs"
+        $promptParts += "4. **Do not assume file types** - any file in these directories is a valid reference"
+        $promptParts += ""
+        
+        # Provide a file tree summary so the AI knows what's there
+        $promptParts += "### File Overview ($($nonImageRefs.Count) files):"
+        $promptParts += ""
+        foreach ($ref in $nonImageRefs) {
+            $promptParts += "- ``$($ref.RelativePath)`` ($($ref.Category), $([math]::Round($ref.Size / 1KB, 1)) KB)"
+        }
+        $promptParts += ""
+        
+        # Still list images individually
+        if ($imageRefs.Count -gt 0) {
+            $promptParts += "### Image Files to Read:"
+            $promptParts += ""
+            foreach ($img in $imageRefs) {
+                $promptParts += "- **$($img.Name)**: ``$($img.Path)``"
+            }
+            $promptParts += ""
+            $promptParts += "**ACTION REQUIRED**: Use the view tool to read each image file listed above before proceeding."
+            $promptParts += ""
+        }
+        
+        return ($promptParts -join "`n")
+    }
+    
+    # Small reference set - inline content directly (original behavior)
     # Categorize references - for text files read content, for images just note the path
     foreach ($ref in $References) {
         switch ($ref.Category) {
@@ -1243,6 +1293,7 @@ function Get-DirectoryFileSummary {
     $text = @($files | Where-Object { $_.Category -in @('Text', 'Markdown') -and -not $_.IsSpec }).Count
     $data = @($files | Where-Object { $_.Category -eq 'StructuredData' }).Count
     $code = @($files | Where-Object { $_.Category -eq 'Code' }).Count
+    $other = @($files | Where-Object { $_.Category -eq 'Other' }).Count
     
     # Build formatted summary
     $parts = @()
@@ -1251,6 +1302,7 @@ function Get-DirectoryFileSummary {
     if ($text -gt 0) { $parts += "$text text" }
     if ($data -gt 0) { $parts += "$data data" }
     if ($code -gt 0) { $parts += "$code code" }
+    if ($other -gt 0) { $parts += "$other other" }
     
     $formatted = if ($parts.Count -gt 0) { $parts -join ', ' } else { "no supported files" }
     
@@ -1261,6 +1313,7 @@ function Get-DirectoryFileSummary {
         Text = $text
         Data = $data
         Code = $code
+        Other = $other
         Specs = $specs
         FormattedSummary = $formatted
         FolderType = $FolderType

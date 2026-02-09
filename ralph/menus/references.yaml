@@ -51,9 +51,9 @@ show_quit: false
 - separator: true
 
 - key: "I"
-  label: Supported file types
+  label: Reference file types
   action: show-types
-  description: Show all supported formats
+  description: How different file types are handled
   color: Gray
 
 - key: H
