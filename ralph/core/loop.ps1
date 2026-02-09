@@ -992,6 +992,7 @@ function Invoke-CopilotInternal {
                 Raw       = $null
                 Duration  = $duration
                 Cancelled = $false
+                ExitCode  = -1
             }
         }
     } else {
@@ -1221,6 +1222,7 @@ function Invoke-CopilotInternal {
                 Raw       = $null
                 Duration  = $duration
                 Cancelled = $false
+                ExitCode  = -1
             }
         }
     }
@@ -2368,26 +2370,26 @@ Don't treat mockups as optional - they define the expected outcome.
     if ($result -and $result.ContainsKey('FatalError') -and $result.FatalError) {
         Write-Ralph "Fatal error occurred during planning - returning to menu" -Type error
         if (Get-Command Write-LogPlan -ErrorAction SilentlyContinue) {
-            $errorMsg = if ($result.ErrorInfo) { $result.ErrorInfo.Message } else { "Fatal error" }
+            $errorMsg = if ($result.ContainsKey('ErrorInfo') -and $result.ErrorInfo -and $result.ErrorInfo.ContainsKey('Message')) { $result.ErrorInfo.Message } else { "Fatal error" }
             Write-LogPlan -Action FAILED -Details "Fatal: $errorMsg"
         }
         Write-Host ""
         Write-Host "  Press any key to return to menu..." -ForegroundColor DarkGray
         $null = [Console]::ReadKey($true)
-        return @{ FatalError = $true; ErrorInfo = $result.ErrorInfo }
+        return @{ FatalError = $true; ErrorInfo = if ($result.ContainsKey('ErrorInfo')) { $result.ErrorInfo } else { $null } }
     }
     
     # Check for critical errors (server down, service unavailable)
     if ($result -and $result.ContainsKey('CriticalError') -and $result.CriticalError) {
         Write-Ralph "Critical error occurred during planning - returning to menu" -Type error
         if (Get-Command Write-LogPlan -ErrorAction SilentlyContinue) {
-            $errorMsg = if ($result.ErrorInfo) { $result.ErrorInfo.Message } else { "Critical error" }
+            $errorMsg = if ($result.ContainsKey('ErrorInfo') -and $result.ErrorInfo -and $result.ErrorInfo.ContainsKey('Message')) { $result.ErrorInfo.Message } else { "Critical error" }
             Write-LogPlan -Action FAILED -Details "Critical: $errorMsg"
         }
         Write-Host ""
         Write-Host "  Press any key to return to menu..." -ForegroundColor DarkGray
         $null = [Console]::ReadKey($true)
-        return @{ CriticalError = $true; ErrorInfo = $result.ErrorInfo }
+        return @{ CriticalError = $true; ErrorInfo = if ($result.ContainsKey('ErrorInfo')) { $result.ErrorInfo } else { $null } }
     }
     
     if (-not $result.Success) {
@@ -2571,26 +2573,26 @@ function Invoke-Building {
         if ($result -and $result.ContainsKey('FatalError') -and $result.FatalError) {
             Write-Ralph "Fatal error occurred - returning to menu" -Type error
             if (Get-Command Write-LogBuild -ErrorAction SilentlyContinue) {
-                $errorMsg = if ($result.ErrorInfo) { $result.ErrorInfo.Message } else { "Fatal error" }
+                $errorMsg = if ($result.ContainsKey('ErrorInfo') -and $result.ErrorInfo -and $result.ErrorInfo.ContainsKey('Message')) { $result.ErrorInfo.Message } else { "Fatal error" }
                 Write-LogBuild -Action FAILED -Iteration $script:Iteration -Details "Fatal: $errorMsg"
             }
             Write-Host ""
             Write-Host "  Press any key to return to menu..." -ForegroundColor DarkGray
             $null = [Console]::ReadKey($true)
-            return @{ FatalError = $true; ErrorInfo = $result.ErrorInfo }
+            return @{ FatalError = $true; ErrorInfo = if ($result.ContainsKey('ErrorInfo')) { $result.ErrorInfo } else { $null } }
         }
         
         # Check for critical errors (server down, service unavailable)
         if ($result -and $result.ContainsKey('CriticalError') -and $result.CriticalError) {
             Write-Ralph "Critical error occurred - returning to menu" -Type error
             if (Get-Command Write-LogBuild -ErrorAction SilentlyContinue) {
-                $errorMsg = if ($result.ErrorInfo) { $result.ErrorInfo.Message } else { "Critical error" }
+                $errorMsg = if ($result.ContainsKey('ErrorInfo') -and $result.ErrorInfo -and $result.ErrorInfo.ContainsKey('Message')) { $result.ErrorInfo.Message } else { "Critical error" }
                 Write-LogBuild -Action FAILED -Iteration $script:Iteration -Details "Critical: $errorMsg"
             }
             Write-Host ""
             Write-Host "  Press any key to return to menu..." -ForegroundColor DarkGray
             $null = [Console]::ReadKey($true)
-            return @{ CriticalError = $true; ErrorInfo = $result.ErrorInfo }
+            return @{ CriticalError = $true; ErrorInfo = if ($result.ContainsKey('ErrorInfo')) { $result.ErrorInfo } else { $null } }
         }
         
         if (-not $result.Success) {

@@ -93,28 +93,29 @@ function Get-RecoveryInfo {
     $info = @{
         HasCheckpoint     = $true
         CanResume         = $true
-        Phase             = $checkpoint.phase
-        InterruptedPhase  = if ($checkpoint.ContainsKey('interruptedPhase')) { $checkpoint.interruptedPhase } else { $checkpoint.phase }
-        Iteration         = $checkpoint.iteration
-        CompletedTasks    = if ($checkpoint.completedTasks) { $checkpoint.completedTasks.Count } else { 0 }
-        CurrentTask       = $checkpoint.currentTask
-        Timestamp         = $checkpoint.timestamp
-        Error             = $checkpoint.error
+        Phase             = if ($checkpoint.ContainsKey('phase')) { $checkpoint.phase } else { 'unknown' }
+        InterruptedPhase  = if ($checkpoint.ContainsKey('interruptedPhase')) { $checkpoint.interruptedPhase } elseif ($checkpoint.ContainsKey('phase')) { $checkpoint.phase } else { 'unknown' }
+        Iteration         = if ($checkpoint.ContainsKey('iteration')) { $checkpoint.iteration } else { 0 }
+        CompletedTasks    = if ($checkpoint.ContainsKey('completedTasks') -and $checkpoint.completedTasks) { $checkpoint.completedTasks.Count } else { 0 }
+        CurrentTask       = if ($checkpoint.ContainsKey('currentTask')) { $checkpoint.currentTask } else { $null }
+        Timestamp         = if ($checkpoint.ContainsKey('timestamp')) { $checkpoint.timestamp } else { $null }
+        Error             = if ($checkpoint.ContainsKey('error')) { $checkpoint.error } else { $null }
         Summary           = ''
     }
     
     # Build summary
-    if ($checkpoint.phase -eq 'error' -and $checkpoint.error) {
-        $info.Summary = "Stopped due to: $($checkpoint.error.Message)"
-        $info.CanResume = $checkpoint.canResume -eq $true
-    } elseif ($checkpoint.phase -eq 'building') {
-        $info.Summary = "$($checkpoint.iteration) iteration(s) completed"
-        if ($checkpoint.currentTask) {
+    if ($checkpoint.ContainsKey('phase') -and $checkpoint.phase -eq 'error' -and $checkpoint.ContainsKey('error') -and $checkpoint.error) {
+        $errorMsg = if ($checkpoint.error -is [hashtable] -and $checkpoint.error.ContainsKey('Message')) { $checkpoint.error.Message } elseif ($checkpoint.error.PSObject.Properties['Message']) { $checkpoint.error.Message } else { "$($checkpoint.error)" }
+        $info.Summary = "Stopped due to: $errorMsg"
+        $info.CanResume = $checkpoint.ContainsKey('canResume') -and $checkpoint.canResume -eq $true
+    } elseif ($checkpoint.ContainsKey('phase') -and $checkpoint.phase -eq 'building') {
+        $info.Summary = "$(if ($checkpoint.ContainsKey('iteration')) { $checkpoint.iteration } else { 0 }) iteration(s) completed"
+        if ($checkpoint.ContainsKey('currentTask') -and $checkpoint.currentTask) {
             $info.Summary += " - Last: $($checkpoint.currentTask)"
         }
-    } elseif ($checkpoint.phase -eq 'planning') {
+    } elseif ($checkpoint.ContainsKey('phase') -and $checkpoint.phase -eq 'planning') {
         $info.Summary = "Planning was interrupted"
-    } elseif ($checkpoint.phase -eq 'spec-creation') {
+    } elseif ($checkpoint.ContainsKey('phase') -and $checkpoint.phase -eq 'spec-creation') {
         $info.Summary = "Spec creation was interrupted"
     }
     
@@ -177,8 +178,9 @@ function Show-RecoveryPrompt {
     
     # Show error if present
     if ($RecoveryInfo.Error) {
+        $errMsg = if ($RecoveryInfo.Error -is [hashtable] -and $RecoveryInfo.Error.ContainsKey('Message')) { $RecoveryInfo.Error.Message } elseif ($RecoveryInfo.Error.PSObject.Properties['Message']) { $RecoveryInfo.Error.Message } else { "$($RecoveryInfo.Error)" }
         Write-Host "  ⚠️  Stopped Reason:" -ForegroundColor Yellow
-        Write-Host "     $($RecoveryInfo.Error.Message)" -ForegroundColor Gray
+        Write-Host "     $errMsg" -ForegroundColor Gray
         Write-Host ""
     }
     

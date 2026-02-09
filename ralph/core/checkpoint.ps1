@@ -455,18 +455,19 @@ function Get-CheckpointSummary {
         return "No checkpoint"
     }
     
-    $summary = "Phase: $($checkpoint.phase)"
+    $summary = "Phase: $(if ($checkpoint.ContainsKey('phase')) { $checkpoint.phase } else { 'unknown' })"
     
-    if ($checkpoint.iteration -gt 0) {
+    if ($checkpoint.ContainsKey('iteration') -and $checkpoint.iteration -gt 0) {
         $summary += ", Iteration: $($checkpoint.iteration)"
     }
     
-    if ($checkpoint.completedTasks -and $checkpoint.completedTasks.Count -gt 0) {
+    if ($checkpoint.ContainsKey('completedTasks') -and $checkpoint.completedTasks -and $checkpoint.completedTasks.Count -gt 0) {
         $summary += ", Completed: $($checkpoint.completedTasks.Count) tasks"
     }
     
-    if ($checkpoint.error) {
-        $summary += " [ERROR: $($checkpoint.error.Message)]"
+    if ($checkpoint.ContainsKey('error') -and $checkpoint.error) {
+        $errorMsg = if ($checkpoint.error -is [hashtable] -and $checkpoint.error.ContainsKey('Message')) { $checkpoint.error.Message } elseif ($checkpoint.error.PSObject.Properties['Message']) { $checkpoint.error.Message } else { "$($checkpoint.error)" }
+        $summary += " [ERROR: $errorMsg]"
     }
     
     return $summary

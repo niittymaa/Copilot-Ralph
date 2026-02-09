@@ -1650,13 +1650,15 @@ function Show-ArrowChoice {
                 $items += New-MenuItem -Text $choice -Value "choice_$index"
                 $valueMap["choice_$index"] = $choice
             } else {
-                $hotkey = if ($choice.Hotkey) { $choice.Hotkey } else { '' }
-                $desc = if ($choice.PSObject.Properties['Description']) { $choice.Description } else { '' }
-                $items += New-MenuItem -Text $choice.Label -Value "choice_$index" -Hotkey $hotkey -Description $desc
-                $valueMap["choice_$index"] = $choice.Value
+                $hotkey = if ($choice -is [hashtable] -and $choice.ContainsKey('Hotkey')) { $choice.Hotkey } elseif ($choice.PSObject.Properties['Hotkey']) { $choice.Hotkey } else { '' }
+                $desc = if ($choice -is [hashtable] -and $choice.ContainsKey('Description')) { $choice.Description } elseif ($choice.PSObject.Properties['Description']) { $choice.Description } else { '' }
+                $label = if ($choice -is [hashtable] -and $choice.ContainsKey('Label')) { $choice.Label } elseif ($choice.PSObject.Properties['Label']) { $choice.Label } else { $choice.ToString() }
+                $value = if ($choice -is [hashtable] -and $choice.ContainsKey('Value')) { $choice.Value } elseif ($choice.PSObject.Properties['Value']) { $choice.Value } else { $choice.ToString() }
+                $items += New-MenuItem -Text $label -Value "choice_$index" -Hotkey $hotkey -Description $desc
+                $valueMap["choice_$index"] = $value
                 
                 # Check if Default property exists and is true
-                if ($choice.PSObject.Properties['Default'] -and $choice.Default) {
+                if (($choice -is [hashtable] -and $choice.ContainsKey('Default') -and $choice.Default) -or ($choice -isnot [hashtable] -and $choice.PSObject.Properties['Default'] -and $choice.Default)) {
                     $defaultIndex = $index
                 }
             }
@@ -1695,10 +1697,10 @@ function Show-ArrowChoice {
         $index = 1
         $keyMap = @{}
         foreach ($choice in $Choices) {
-            $label = if ($choice -is [string]) { $choice } else { $choice.Label }
-            $hotkey = if ($choice -is [hashtable] -and $choice.Hotkey) { $choice.Hotkey } else { $index.ToString() }
+            $label = if ($choice -is [string]) { $choice } elseif ($choice -is [hashtable] -and $choice.ContainsKey('Label')) { $choice.Label } elseif ($choice.PSObject.Properties['Label']) { $choice.Label } else { $choice.ToString() }
+            $hotkey = if ($choice -is [hashtable] -and $choice.ContainsKey('Hotkey')) { $choice.Hotkey } elseif ($choice -isnot [hashtable] -and $choice.PSObject.Properties['Hotkey']) { $choice.Hotkey } else { $index.ToString() }
             Write-Host "  [$hotkey] $label" -ForegroundColor White
-            $keyMap[$hotkey.ToUpper()] = if ($choice -is [string]) { $choice } else { $choice.Value }
+            $keyMap[$hotkey.ToUpper()] = if ($choice -is [string]) { $choice } elseif ($choice -is [hashtable] -and $choice.ContainsKey('Value')) { $choice.Value } elseif ($choice.PSObject.Properties['Value']) { $choice.Value } else { $choice.ToString() }
             $index++
         }
         
@@ -1968,11 +1970,11 @@ function Show-ListSelectionMenu {
                 $valueMap["item_$i"] = $item
             } else {
                 # Handle hashtable items
-                $label = if ($item.ContainsKey('Label')) { $item.Label } elseif ($item.Label) { $item.Label } else { $item.ToString() }
-                $desc = if ($item.ContainsKey('Description')) { $item.Description } elseif ($item.PSObject.Properties['Description']) { $item.Description } else { '' }
-                $icon = if ($item.ContainsKey('Icon')) { $item.Icon } elseif ($item.PSObject.Properties['Icon']) { $item.Icon } else { '' }
+                $label = if ($item -is [hashtable] -and $item.ContainsKey('Label')) { $item.Label } elseif ($item.PSObject.Properties['Label']) { $item.Label } else { $item.ToString() }
+                $desc = if ($item -is [hashtable] -and $item.ContainsKey('Description')) { $item.Description } elseif ($item.PSObject.Properties['Description']) { $item.Description } else { '' }
+                $icon = if ($item -is [hashtable] -and $item.ContainsKey('Icon')) { $item.Icon } elseif ($item.PSObject.Properties['Icon']) { $item.Icon } else { '' }
                 $menuItems += New-MenuItem -Text $label -Value "item_$i" -Hotkey "$num" -Description $desc -Icon $icon
-                $valueMap["item_$i"] = if ($item.ContainsKey('Value')) { $item.Value } elseif ($item.Value) { $item.Value } else { $item }
+                $valueMap["item_$i"] = if ($item -is [hashtable] -and $item.ContainsKey('Value')) { $item.Value } elseif ($item.PSObject.Properties['Value']) { $item.Value } else { $item }
             }
         }
         
@@ -2017,7 +2019,7 @@ function Show-ListSelectionMenu {
         for ($i = 0; $i -lt $Items.Count; $i++) {
             $item = $Items[$i]
             $num = $i + 1
-            $label = if ($item -is [string]) { $item } else { $item.Label }
+            $label = if ($item -is [string]) { $item } elseif ($item -is [hashtable] -and $item.ContainsKey('Label')) { $item.Label } elseif ($item.PSObject.Properties['Label']) { $item.Label } else { $item.ToString() }
             Write-Host "  [$num] $label" -ForegroundColor White
         }
         
@@ -2043,7 +2045,7 @@ function Show-ListSelectionMenu {
         $index = 0
         if ([int]::TryParse($input.Value, [ref]$index) -and $index -ge 1 -and $index -le $Items.Count) {
             $item = $Items[$index - 1]
-            $value = if ($item -is [string]) { $item } else { $item.Value }
+            $value = if ($item -is [string]) { $item } elseif ($item -is [hashtable] -and $item.ContainsKey('Value')) { $item.Value } elseif ($item.PSObject.Properties['Value']) { $item.Value } else { $item }
             return @{ Action = 'select'; Value = $value; Index = $index - 1 }
         }
         
