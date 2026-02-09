@@ -660,7 +660,9 @@ function Invoke-Copilot {
         
         # Use new error classification system if available
         if (Get-Command Get-ErrorClassification -ErrorAction SilentlyContinue) {
-            $errorInfo = Get-ErrorClassification -ErrorMessage $result.Output
+            # Guard against empty output (e.g. Copilot crash with no stderr)
+            $errorMsg = if ([string]::IsNullOrWhiteSpace($result.Output)) { "Copilot exited with code $($result.ExitCode) and no output" } else { $result.Output }
+            $errorInfo = Get-ErrorClassification -ErrorMessage $errorMsg
             
             # Fatal errors - stop immediately, return to menu
             # NOTE: Do NOT save checkpoint here - checkpoint is saved AFTER successful iterations
