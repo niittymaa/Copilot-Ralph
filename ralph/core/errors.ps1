@@ -91,8 +91,20 @@ function Get-ErrorClassification {
     #>
     param(
         [Parameter(Mandatory)]
+        [AllowEmptyString()]
         [string]$ErrorMessage
     )
+    
+    # Guard against empty/null output (e.g. Copilot crash with no stderr)
+    if ([string]::IsNullOrWhiteSpace($ErrorMessage)) {
+        return @{
+            Type            = $script:ErrorTypes.Unknown
+            Message         = 'Copilot exited with no output'
+            CanResume       = $true
+            RetryAfter      = $null
+            OriginalMessage = '(empty)'
+        }
+    }
     
     $errorLower = $ErrorMessage.ToLower()
     
@@ -156,6 +168,7 @@ function Test-FatalError {
     #>
     param([string]$ErrorMessage)
     
+    if ([string]::IsNullOrWhiteSpace($ErrorMessage)) { return $false }
     $classification = Get-ErrorClassification -ErrorMessage $ErrorMessage
     return $classification.Type -eq $script:ErrorTypes.Fatal
 }
@@ -171,6 +184,7 @@ function Test-TransientError {
     #>
     param([string]$ErrorMessage)
     
+    if ([string]::IsNullOrWhiteSpace($ErrorMessage)) { return $false }
     $classification = Get-ErrorClassification -ErrorMessage $ErrorMessage
     return $classification.Type -eq $script:ErrorTypes.Transient
 }
@@ -186,6 +200,7 @@ function Test-CriticalError {
     #>
     param([string]$ErrorMessage)
     
+    if ([string]::IsNullOrWhiteSpace($ErrorMessage)) { return $false }
     $classification = Get-ErrorClassification -ErrorMessage $ErrorMessage
     return $classification.Type -eq $script:ErrorTypes.Critical
 }

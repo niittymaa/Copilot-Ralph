@@ -198,12 +198,20 @@ function Show-RecoveryPrompt {
     
     # Show choices using arrow navigation if available
     if (Get-Command Show-ArrowChoice -ErrorAction SilentlyContinue) {
-        $choice = Show-ArrowChoice -Title "What would you like to do?" -Choices @(
-            @{ Label = "Resume from checkpoint"; Value = "resume"; Default = $true }
-            @{ Label = "Start fresh (discard progress)"; Value = "restart" }
-            @{ Label = "Cancel (return to menu)"; Value = "cancel" }
-        )
-        return $choice
+        try {
+            $choice = Show-ArrowChoice -Title "What would you like to do?" -Choices @(
+                @{ Label = "Resume from checkpoint"; Value = "resume"; Default = $true }
+                @{ Label = "Start fresh (discard progress)"; Value = "restart" }
+                @{ Label = "Cancel (return to menu)"; Value = "cancel" }
+            )
+            if ($choice) { return $choice }
+            return 'cancel'
+        } catch {
+            if (Get-Command Write-Log -ErrorAction SilentlyContinue) {
+                Write-Log -Tag 'WARN' -Message "Arrow menu failed in recovery prompt, using fallback: $_"
+            }
+            # Fall through to text-based prompt below
+        }
     }
     
     # Fallback to simple prompt

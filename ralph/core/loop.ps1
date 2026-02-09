@@ -2600,6 +2600,51 @@ function Invoke-Building {
             if (Get-Command Write-LogBuild -ErrorAction SilentlyContinue) {
                 Write-LogBuild -Action FAILED -Iteration $script:Iteration -Details $result.Output
             }
+            
+            # Ask user what to do instead of silently ending the session
+            $failureAction = $null
+            try {
+                $errorDetail = if ([string]::IsNullOrWhiteSpace($result.Output)) { "Copilot exited with no output" } else { 
+                    $truncated = if ($result.Output.Length -gt 200) { $result.Output.Substring(0, 200) + "..." } else { $result.Output }
+                    $truncated
+                }
+                Write-Host ""
+                Write-Host "  ⚠️  Build iteration $($script:Iteration) failed" -ForegroundColor Yellow
+                Write-Host "     $errorDetail" -ForegroundColor DarkGray
+                Write-Host ""
+                
+                if (Get-Command Show-ArrowChoice -ErrorAction SilentlyContinue) {
+                    $failureAction = Show-ArrowChoice -Title "What would you like to do?" -NoBack -Choices @(
+                        @{ Label = "Retry this task"; Value = "retry"; Default = $true }
+                        @{ Label = "Skip this task and continue"; Value = "skip" }
+                        @{ Label = "Stop and return to menu"; Value = "stop" }
+                    )
+                }
+            } catch {
+                if (Get-Command Write-Log -ErrorAction SilentlyContinue) {
+                    Write-Log -Tag 'WARN' -Message "Build failure menu error, stopping: $_"
+                }
+            }
+            
+            if ($failureAction -eq 'retry') {
+                Write-Ralph "Retrying task..." -Type info
+                # Decrement iteration so retry uses same iteration number
+                $script:Iteration--
+                Start-Sleep -Seconds 2
+                continue
+            } elseif ($failureAction -eq 'skip') {
+                Write-Ralph "Skipping task and continuing..." -Type warning
+                # Mark the task as skipped in the plan file so Get-NextTask advances
+                if (Test-Path $PlanFile) {
+                    $escapedTask = [regex]::Escape($task)
+                    $planContent = Get-Content $PlanFile -Raw
+                    $planContent = $planContent -replace "(?m)^(\s*)-\s*\[\s*\]\s*$escapedTask", '$1- [x] (SKIPPED) ' + $task
+                    $planContent | Set-Content $PlanFile -NoNewline
+                }
+                Start-Sleep -Seconds 1
+                continue
+            }
+            # 'stop' or $null (menu failed) — break to end session
             break
         }
         
