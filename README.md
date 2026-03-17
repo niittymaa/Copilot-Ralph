@@ -48,6 +48,32 @@ Requires active GitHub Copilot subscription (Pro, Pro+, Business, or Enterprise)
 
 ## Quick Start
 
+### One-Line Install (Recommended)
+
+Run this at the root of any project to install and start Ralph:
+
+**PowerShell (Windows/macOS/Linux):**
+```powershell
+irm https://raw.githubusercontent.com/niittymaa/Copilot-Ralph/main/install.ps1 | iex
+```
+
+**Bash (Linux/macOS/WSL):**
+```bash
+curl -fsSL https://raw.githubusercontent.com/niittymaa/Copilot-Ralph/main/install.sh | bash
+```
+
+This downloads only the `ralph/` folder into your project, sets up update tracking, and starts Ralph automatically.
+
+#### Install Options
+
+| Option | PowerShell | Bash |
+|--------|-----------|------|
+| Install only (don't start) | `iex "& { $(irm .../install.ps1) } -NoStart"` | `curl ... \| bash -s -- --no-start` |
+| Specific branch | `iex "& { $(irm .../install.ps1) } -Branch dev"` | `curl ... \| bash -s -- --branch dev` |
+| Force overwrite | `iex "& { $(irm .../install.ps1) } -Force"` | `curl ... \| bash -s -- --force` |
+
+### Manual Install
+
 | Step | Action | Command |
 |------|--------|---------|
 | 1 | Copy `ralph/` folder to your project | Manual copy |
