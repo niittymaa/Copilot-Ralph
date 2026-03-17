@@ -5,5 +5,9 @@
   "verbose_mode": true,
   "_verbose_mode_help": "When true, shows detailed output and debug information",
   "venv_mode": "auto",
-  "_venv_mode_help": "Virtual environment mode: 'auto' (detect if needed), 'always' (always create), 'disabled' (never create, not recommended)"
+  "_venv_mode_help": "Virtual environment mode: 'auto' (detect if needed), 'always' (always create), 'disabled' (never create, not recommended)",
+  "allow_all_paths": false,
+  "_allow_all_paths_help": "When true, passes --allow-all-paths to Copilot CLI, disabling file path verification (allows access to any path on the filesystem)",
+  "additional_dirs": [],
+  "_additional_dirs_help": "Array of directory paths to grant Copilot CLI access to via --add-dir (e.g. ['D:/Git/other-project', 'C:/shared/docs']). Use forward slashes or escaped backslashes."
 }

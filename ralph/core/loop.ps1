@@ -361,6 +361,24 @@ Update-TaskContext
 $script:VerboseMode = $ShowVerbose.IsPresent
 $script:DeveloperMode = $DeveloperMode
 
+# Load path permission settings from config.json
+$script:AllowAllPaths = $false
+$script:AdditionalDirs = @()
+try {
+    $configPath = Join-Path $script:RalphDir 'config.json'
+    if (Test-Path $configPath) {
+        $pathConfig = Get-Content $configPath -Raw | ConvertFrom-Json -AsHashtable
+        if ($pathConfig.ContainsKey('allow_all_paths') -and $pathConfig.allow_all_paths) {
+            $script:AllowAllPaths = $true
+        }
+        if ($pathConfig.ContainsKey('additional_dirs') -and $pathConfig.additional_dirs.Count -gt 0) {
+            $script:AdditionalDirs = @($pathConfig.additional_dirs)
+        }
+    }
+} catch {
+    # Silently continue with defaults if config read fails
+}
+
 # Effective max iterations (set during build phase)
 $script:EffectiveMaxIterations = 0
 
@@ -793,6 +811,12 @@ function Invoke-CopilotInternal {
             if ($AllowAllTools) {
                 $copilotCmd += ' --allow-all-tools'
             }
+            if ($script:AllowAllPaths) {
+                $copilotCmd += ' --allow-all-paths'
+            }
+            foreach ($dir in $script:AdditionalDirs) {
+                $copilotCmd += " --add-dir `"$dir`""
+            }
             if ($currentModel) {
                 $copilotCmd += " --model $currentModel"
             }
@@ -1019,6 +1043,12 @@ function Invoke-CopilotInternal {
             $copilotCmd = "copilot -p '@$promptFile'"
             if ($AllowAllTools) {
                 $copilotCmd += ' --allow-all-tools'
+            }
+            if ($script:AllowAllPaths) {
+                $copilotCmd += ' --allow-all-paths'
+            }
+            foreach ($dir in $script:AdditionalDirs) {
+                $copilotCmd += " --add-dir `"$dir`""
             }
             if ($currentModel) {
                 $copilotCmd += " --model $currentModel"

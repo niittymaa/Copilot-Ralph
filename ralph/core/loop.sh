@@ -1232,6 +1232,29 @@ invoke_copilot() {
     log_verbose "Prompt preview: ${prompt:0:100}..." "Copilot"
     
     local cli_args=(-p "$prompt" --allow-all-tools)
+    
+    # Load path permission settings from config.json
+    local config_file="$RALPH_DIR/config.json"
+    if [[ -f "$config_file" ]]; then
+        if command -v jq &>/dev/null; then
+            local allow_all_paths
+            allow_all_paths=$(jq -r '.allow_all_paths // false' "$config_file" 2>/dev/null)
+            if [[ "$allow_all_paths" == "true" ]]; then
+                cli_args+=(--allow-all-paths)
+            fi
+            local add_dirs
+            add_dirs=$(jq -r '.additional_dirs[]? // empty' "$config_file" 2>/dev/null)
+            while IFS= read -r dir; do
+                [[ -n "$dir" ]] && cli_args+=(--add-dir "$dir")
+            done <<< "$add_dirs"
+        else
+            # Fallback: simple grep-based parsing for allow_all_paths
+            if grep -q '"allow_all_paths"[[:space:]]*:[[:space:]]*true' "$config_file" 2>/dev/null; then
+                cli_args+=(--allow-all-paths)
+            fi
+        fi
+    fi
+    
     if [[ -n "$MODEL" ]]; then
         cli_args+=(--model "$MODEL")
     fi
