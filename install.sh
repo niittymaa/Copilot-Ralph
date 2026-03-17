@@ -128,7 +128,7 @@ TEMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TEMP_DIR"' EXIT
 
 # Try sparse checkout first (minimal download)
-if git clone --depth 1 --branch "$BRANCH" --filter=blob:none --sparse "$REPO_URL" "$TEMP_DIR" 2>/dev/null; then
+if git clone --depth 1 --branch "$BRANCH" --filter=blob:none --sparse --quiet --no-progress "$REPO_URL" "$TEMP_DIR" 2>/dev/null; then
     (
         cd "$TEMP_DIR"
         git sparse-checkout set ralph 2>/dev/null
@@ -147,7 +147,7 @@ else
     rm -rf "$TEMP_DIR"
     TEMP_DIR="$(mktemp -d)"
 
-    if git clone --depth 1 --branch "$BRANCH" "$REPO_URL" "$TEMP_DIR" 2>/dev/null; then
+    if git clone --depth 1 --branch "$BRANCH" --quiet --no-progress "$REPO_URL" "$TEMP_DIR" 2>/dev/null; then
         cp -r "$TEMP_DIR/ralph" "$RALPH_DIR"
         echo -e "${GREEN}  Downloaded ralph/ folder (fallback method)${NC}"
     else

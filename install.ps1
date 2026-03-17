@@ -90,8 +90,9 @@ Write-Host "  Downloading Ralph ($Branch)..." -ForegroundColor Cyan
 $TempDir = Join-Path ([System.IO.Path]::GetTempPath()) "ralph-install-$(Get-Random)"
 
 try {
-    # Clone with minimal data (shallow, sparse)
-    git clone --depth 1 --branch $Branch --filter=blob:none --sparse $RepoUrl $TempDir 2>&1 | Out-Null
+    # Clone with minimal data (shallow, sparse) - suppress all git progress output
+    $env:GIT_TERMINAL_PROMPT = "0"
+    git clone --depth 1 --branch $Branch --filter=blob:none --sparse --quiet --no-progress $RepoUrl $TempDir 2>$null
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to clone repository"
     }
@@ -99,7 +100,7 @@ try {
     # Set up sparse checkout to only get ralph/ folder
     Push-Location $TempDir
     try {
-        git sparse-checkout set ralph 2>&1 | Out-Null
+        git sparse-checkout set ralph 2>$null
         if ($LASTEXITCODE -ne 0) {
             throw "Failed to set up sparse checkout"
         }
@@ -124,7 +125,7 @@ try {
     Write-Host "  Trying fallback download method..." -ForegroundColor Yellow
     if (Test-Path $TempDir) { Remove-Item -Recurse -Force $TempDir }
 
-    git clone --depth 1 --branch $Branch $RepoUrl $TempDir 2>&1 | Out-Null
+    git clone --depth 1 --branch $Branch --quiet --no-progress $RepoUrl $TempDir 2>$null
     if ($LASTEXITCODE -ne 0) {
         Write-Host "  ERROR: Failed to download Ralph" -ForegroundColor Red
         Write-Host "  Check your network connection and try again." -ForegroundColor Yellow
