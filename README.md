@@ -69,8 +69,7 @@ This downloads only the `ralph/` folder into your project, sets up update tracki
 | Option | PowerShell | Bash |
 |--------|-----------|------|
 | Install only (don't start) | `iex "& { $(irm .../install.ps1) } -NoStart"` | `curl ... \| bash -s -- --no-start` |
-| Specific branch | `iex "& { $(irm .../install.ps1) } -Branch dev"` | `curl ... \| bash -s -- --branch dev` |
-| Force overwrite | `iex "& { $(irm .../install.ps1) } -Force"` | `curl ... \| bash -s -- --force` |
+| Force (skip prompts) | `iex "& { $(irm .../install.ps1) } -Force"` | `curl ... \| bash -s -- --force` |
 
 ### Manual Install
 
