@@ -219,7 +219,7 @@ function Get-RalphConfig {
             developer_mode = $false
             verbose_mode = $true
             venv_mode = 'auto'
-            allow_all_paths = $false
+            allow_all_paths = $true
             additional_dirs = @()
         }
         $defaultConfig | ConvertTo-Json | Set-Content $configPath -Encoding UTF8
@@ -235,7 +235,7 @@ function Get-RalphConfig {
             developer_mode = $false
             verbose_mode = $true
             venv_mode = 'auto'
-            allow_all_paths = $false
+            allow_all_paths = $true
             additional_dirs = @()
         }
     }
