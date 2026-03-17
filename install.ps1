@@ -294,14 +294,14 @@ function Install-RalphFromRemote {
 
     try {
         $env:GIT_TERMINAL_PROMPT = "0"
-        $null = git clone --depth 1 --branch $Branch --filter=blob:none --sparse --quiet --no-progress $RepoUrl $TempDir 2>&1
+        git clone --depth 1 --branch $Branch --filter=blob:none --sparse --quiet --no-progress $RepoUrl $TempDir 2>&1 | Out-Null
         if ($LASTEXITCODE -ne 0) {
             throw "Failed to clone repository"
         }
 
         Push-Location $TempDir
         try {
-            $null = git sparse-checkout set ralph 2>&1
+            git sparse-checkout set ralph 2>&1 | Out-Null
             if ($LASTEXITCODE -ne 0) {
                 throw "Failed to set up sparse checkout"
             }
@@ -321,7 +321,7 @@ function Install-RalphFromRemote {
         Write-Host "  Trying fallback download method..." -ForegroundColor Yellow
         if (Test-Path $TempDir) { Remove-Item -Recurse -Force $TempDir }
 
-        $null = git clone --depth 1 --branch $Branch --quiet --no-progress $RepoUrl $TempDir 2>&1
+        git clone --depth 1 --branch $Branch --quiet --no-progress $RepoUrl $TempDir 2>&1 | Out-Null
         if ($LASTEXITCODE -ne 0) {
             Write-Host "  ERROR: Failed to download Ralph" -ForegroundColor Red
             Write-Host "  Check your network connection and try again." -ForegroundColor Yellow
