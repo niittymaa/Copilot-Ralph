@@ -23,6 +23,8 @@ Ralph autonomously modifies your codebase:
 - Start with small, non-critical tasks
 - Monitor execution
 
+**Filesystem Access:** By default, Ralph grants Copilot CLI unrestricted filesystem access (`--allow-all-paths`) to enable autonomous operation across directories. This means the AI agent can read and write files **anywhere on your system**. You can restrict this in `ralph/config.json` by setting `allow_all_paths` to `false` and using `additional_dirs` to whitelist specific directories instead.
+
 **Token Usage Warning:** Continuous autonomous loops consume significant AI tokens. Complex projects may require 20-50+ iterations. Monitor your GitHub Copilot usage and billing.
 
 ---
@@ -499,6 +501,35 @@ Automatic Python venv creation at `.ralph/venv/` (gitignored).
 
 ---
 
+## Configuration
+
+Settings in `ralph/config.json` (auto-created on first run, gitignored):
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `verbose_mode` | `bool` | `true` | Show detailed output and debug information |
+| `developer_mode` | `bool` | `false` | Keep screen history between menus |
+| `venv_mode` | `string` | `"auto"` | Python venv: `auto`, `always`, or `disabled` |
+| `allow_all_paths` | `bool` | `true` | Grant Copilot CLI unrestricted filesystem access |
+| `additional_dirs` | `string[]` | `[]` | Specific directories to grant access to via `--add-dir` |
+
+### Path Permissions
+
+By default, `allow_all_paths` is `true` so Ralph operates autonomously without "Permission denied" errors when accessing files outside the workspace (e.g., reference projects, shared documentation).
+
+**To restrict access**, set `allow_all_paths` to `false` and optionally whitelist specific directories:
+
+```json
+{
+  "allow_all_paths": false,
+  "additional_dirs": ["D:\\Git\\other-project", "C:\\shared\\docs"]
+}
+```
+
+See `ralph/config.example.json` for a fully documented template.
+
+---
+
 ## Utility Scripts
 
 ### Fork Management
@@ -574,11 +605,15 @@ Ralph uses native GitHub Copilot CLI with specific flags:
 | Flag | Purpose |
 |------|---------|
 | `--allow-all-tools` | Non-interactive autonomous operation |
+| `--allow-all-paths` | Unrestricted filesystem access (default: enabled) |
+| `--add-dir <path>` | Grant access to specific additional directories |
 | `-p <prompt>` | Programmatic mode |
 | `--model <model>` | Specify AI model |
 | `--agent <name>` | Use custom agent from `.github/agents/` |
 
 `--allow-all-tools` is native Copilot CLI feature enabling autonomous tool usage without confirmation prompts.
+
+`--allow-all-paths` is enabled by default so Ralph can operate autonomously across directories (e.g., reading reference files from other projects). Disable in `config.json` if you need restricted access.
 
 ---
 
@@ -623,6 +658,7 @@ File-based memory persists learnings via `progress.txt`. Backpressure (tests/lin
 | Problem | Solution |
 |---------|----------|
 | "Copilot CLI not found" | `npm install -g @github/copilot` then `copilot auth` |
+| "Permission denied" from Copilot | Ensure `allow_all_paths` is `true` in `ralph/config.json` (default), or add specific dirs to `additional_dirs` |
 | "Agent file not found" | Ensure `.github/agents/ralph.agent.md` exists |
 | Nothing changed | Check `progress.txt` |
 | Stuck in loop | Break large tasks into smaller ones in `IMPLEMENTATION_PLAN.md` |
