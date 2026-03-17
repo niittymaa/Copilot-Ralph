@@ -68,6 +68,40 @@ Write-Host "━━━━━━━━━━━━━━━━━━━━━━�
 Write-Host ""
 
 # ═══════════════════════════════════════════════════════════════
+#                     DISCLAIMER
+# ═══════════════════════════════════════════════════════════════
+
+if (-not $Force) {
+    Write-Host "  ┌─────────────────────────────────────────────────────────┐" -ForegroundColor Yellow
+    Write-Host "  │                    ⚠️  DISCLAIMER                       │" -ForegroundColor Yellow
+    Write-Host "  │                                                         │" -ForegroundColor Yellow
+    Write-Host "  │  Ralph is an autonomous AI coding agent that modifies   │" -ForegroundColor Yellow
+    Write-Host "  │  your codebase. By installing, you acknowledge:         │" -ForegroundColor Yellow
+    Write-Host "  │                                                         │" -ForegroundColor Yellow
+    Write-Host "  │  • Ralph will read, write, and delete files in your     │" -ForegroundColor Yellow
+    Write-Host "  │    project directory autonomously                       │" -ForegroundColor Yellow
+    Write-Host "  │  • By default, Ralph has unrestricted filesystem        │" -ForegroundColor Yellow
+    Write-Host "  │    access (configurable in ralph/config.json)           │" -ForegroundColor Yellow
+    Write-Host "  │  • Continuous AI loops consume significant tokens       │" -ForegroundColor Yellow
+    Write-Host "  │  • Always use Git version control and review changes    │" -ForegroundColor Yellow
+    Write-Host "  │                                                         │" -ForegroundColor Yellow
+    Write-Host "  │  USE AT YOUR OWN RISK. The authors assume no           │" -ForegroundColor Yellow
+    Write-Host "  │  responsibility for any damage, data loss, or           │" -ForegroundColor Yellow
+    Write-Host "  │  unintended modifications caused by this software.      │" -ForegroundColor Yellow
+    Write-Host "  │                                                         │" -ForegroundColor Yellow
+    Write-Host "  │  Requires: GitHub Copilot CLI + active subscription     │" -ForegroundColor Yellow
+    Write-Host "  └─────────────────────────────────────────────────────────┘" -ForegroundColor Yellow
+    Write-Host ""
+    $accept = Read-Host "  Accept and continue? (yes/[N]o)"
+    if ([string]::IsNullOrWhiteSpace($accept)) { $accept = 'n' }
+    if ($accept -notmatch "^(y|yes)$") {
+        Write-Host "  Installation cancelled." -ForegroundColor Gray
+        exit 0
+    }
+    Write-Host ""
+}
+
+# ═══════════════════════════════════════════════════════════════
 #                     PREREQUISITES
 # ═══════════════════════════════════════════════════════════════
 
@@ -404,8 +438,9 @@ if (Test-Path $RalphDir) {
     } else {
         Write-Host "  What would you like to do?" -ForegroundColor Cyan
         Write-Host ""
-        Write-Host "    [1] Fresh install    - Remove everything, install clean" -ForegroundColor White
-        Write-Host "                           (removes all sessions, cache, memory)" -ForegroundColor DarkGray
+        Write-Host "    [1] Fresh install    - Remove all Ralph files, install clean" -ForegroundColor White
+        Write-Host "                           (removes Ralph sessions, cache, memory)" -ForegroundColor DarkGray
+        Write-Host "                           (your project source code is not affected)" -ForegroundColor DarkGray
         Write-Host "    [2] Update Ralph     - Update framework only, keep your data" -ForegroundColor White
         Write-Host "                           (preserves sessions, specs, memory)" -ForegroundColor DarkGray
         Write-Host "    [3] Uninstall Ralph  - Remove all Ralph files from project" -ForegroundColor White
