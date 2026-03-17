@@ -299,10 +299,10 @@ install_ralph_from_remote() {
     TEMP_DIR="$(mktemp -d)"
     trap 'rm -rf "$TEMP_DIR"' EXIT
 
-    if git clone --depth 1 --branch "$BRANCH" --filter=blob:none --sparse --quiet --no-progress "$REPO_URL" "$TEMP_DIR" 2>/dev/null; then
+    if git clone --depth 1 --branch "$BRANCH" --filter=blob:none --sparse --quiet --no-progress "$REPO_URL" "$TEMP_DIR" >/dev/null 2>&1; then
         (
             cd "$TEMP_DIR"
-            git sparse-checkout set ralph 2>/dev/null
+            git sparse-checkout set ralph >/dev/null 2>&1
         )
 
         if [[ -d "$TEMP_DIR/ralph" ]]; then
@@ -317,7 +317,7 @@ install_ralph_from_remote() {
         rm -rf "$TEMP_DIR"
         TEMP_DIR="$(mktemp -d)"
 
-        if git clone --depth 1 --branch "$BRANCH" --quiet --no-progress "$REPO_URL" "$TEMP_DIR" 2>/dev/null; then
+        if git clone --depth 1 --branch "$BRANCH" --quiet --no-progress "$REPO_URL" "$TEMP_DIR" >/dev/null 2>&1; then
             cp -r "$TEMP_DIR/ralph" "$RALPH_DIR"
             echo -e "${GREEN}  Downloaded ralph/ folder (fallback method)${NC}"
         else
@@ -460,7 +460,8 @@ case "$selected_action" in
 
         if [[ "$NO_START" != "true" ]]; then
             echo -e "${CYAN}  Starting Ralph...${NC}"
-            echo ""
+            sleep 1.5
+            clear
             exec "$RALPH_DIR/ralph.sh"
         fi
         ;;
@@ -489,7 +490,8 @@ case "$selected_action" in
 
         if [[ "$NO_START" != "true" ]]; then
             echo -e "${CYAN}  Starting Ralph...${NC}"
-            echo ""
+            sleep 1.5
+            clear
             exec "$RALPH_DIR/ralph.sh"
         fi
         ;;
@@ -553,7 +555,8 @@ case "$selected_action" in
 
         if [[ "$NO_START" != "true" ]]; then
             echo -e "${CYAN}  Starting Ralph...${NC}"
-            echo ""
+            sleep 1.5
+            clear
             exec "$RALPH_DIR/ralph.sh"
         fi
         ;;
