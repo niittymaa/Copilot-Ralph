@@ -362,14 +362,14 @@ $script:VerboseMode = $ShowVerbose.IsPresent
 $script:DeveloperMode = $DeveloperMode
 
 # Load path permission settings from config.json
-$script:AllowAllPaths = $false
+$script:AllowAllPaths = $true  # Default: always allow all paths for autonomous operation
 $script:AdditionalDirs = @()
 try {
     $configPath = Join-Path $script:RalphDir 'config.json'
     if (Test-Path $configPath) {
         $pathConfig = Get-Content $configPath -Raw | ConvertFrom-Json -AsHashtable
-        if ($pathConfig.ContainsKey('allow_all_paths') -and $pathConfig.allow_all_paths) {
-            $script:AllowAllPaths = $true
+        if ($pathConfig.ContainsKey('allow_all_paths')) {
+            $script:AllowAllPaths = [bool]$pathConfig.allow_all_paths
         }
         if ($pathConfig.ContainsKey('additional_dirs') -and $pathConfig.additional_dirs.Count -gt 0) {
             $script:AdditionalDirs = @($pathConfig.additional_dirs)
@@ -381,6 +381,9 @@ try {
 
 # Effective max iterations (set during build phase)
 $script:EffectiveMaxIterations = 0
+
+# User guidance for current session (injected into task prompts)
+$script:SessionGuidance = $null
 
 # ═══════════════════════════════════════════════════════════════
 #                         UTILITIES
@@ -592,10 +595,24 @@ Don't improvise when a reference shows exactly what to build.
 "@
     }
     
+    # Build user guidance section if provided
+    $guidanceSection = ""
+    if (-not [string]::IsNullOrWhiteSpace($script:SessionGuidance)) {
+        $guidanceSection = @"
+
+## USER GUIDANCE (APPLY TO ALL TASKS)
+
+The user provided the following additional guidance for this session. Follow these instructions alongside the task:
+
+$($script:SessionGuidance)
+
+"@
+    }
+    
     # Build the combined prompt with task injection and references
     $taskPrompt = @"
 $BasePrompt
-$referenceSection
+$referenceSection$guidanceSection
 ## YOUR ASSIGNED TASK FOR THIS ITERATION
 
 **DO NOT search for tasks in IMPLEMENTATION_PLAN.md.** Your task has already been selected for you:
@@ -2426,6 +2443,21 @@ You are being asked to find NEW work - improvements, missing features, bugs, or 
         Save-PhaseCheckpoint -Phase 'planning'
     }
     
+    # Inject user guidance into planning prompt if provided
+    if (-not [string]::IsNullOrWhiteSpace($script:SessionGuidance)) {
+        $agentPrompt = $agentPrompt + @"
+
+## USER GUIDANCE (FOLLOW THESE INSTRUCTIONS)
+
+The user provided the following additional guidance for this session:
+
+$($script:SessionGuidance)
+
+Take this guidance into account when creating the implementation plan.
+
+"@
+    }
+    
     if ($Manual) {
         Write-Ralph "Copy this prompt to Copilot Chat:" -Type warning
         Write-Host ""
@@ -3435,6 +3467,40 @@ function Start-RalphLoop {
             if (-not (Invoke-ProjectSetup)) {
                 return
             }
+            
+            # Prompt for optional user guidance before building
+            $script:SessionGuidance = $null
+            Write-Host ""
+            $guidanceChoice = Show-ArrowChoice -Title "Additional guidance for this build?" -Choices @(
+                @{ Label = "Start building"; Value = "start"; Hotkey = "1"; Default = $true }
+                @{ Label = "Add guidance (extra instructions for AI)"; Value = "guide"; Hotkey = "2" }
+                @{ Label = "Return to menu"; Value = "menu"; Hotkey = "3" }
+            )
+            switch ($guidanceChoice) {
+                'guide' {
+                    Write-Host ""
+                    Write-Host "  Enter your guidance (press Enter on empty line to finish):" -ForegroundColor Cyan
+                    Write-Host "  (e.g., 'verify visually with playwright', 'use API key X for testing')" -ForegroundColor DarkGray
+                    Write-Host ""
+                    $lines = @()
+                    while ($true) {
+                        $line = Read-Host "  "
+                        if ([string]::IsNullOrWhiteSpace($line) -and $lines.Count -gt 0) { break }
+                        if (-not [string]::IsNullOrWhiteSpace($line)) {
+                            $lines += $line
+                        }
+                    }
+                    if ($lines.Count -gt 0) {
+                        $script:SessionGuidance = $lines -join "`n"
+                        Write-Ralph "Guidance saved - will be included in all task prompts" -Type success
+                    }
+                }
+                'menu' {
+                    Start-RalphLoop
+                    return
+                }
+            }
+            
             $buildResult = Invoke-Building
             if ($buildResult -is [hashtable] -and $buildResult.ContainsKey('Cancelled') -and $buildResult.Cancelled) {
                 # User cancelled - go back to session home
@@ -3451,7 +3517,55 @@ function Start-RalphLoop {
             # Auto/Continue mode: update AGENTS.md, plan if needed, then build
             Invoke-AgentsUpdate | Out-Null
             
-            if (Test-NeedsPlanning) {
+            # Prompt for optional user guidance before planning/building
+            $script:SessionGuidance = $null
+            $stats = Get-TaskStats
+            $needsPlanning = Test-NeedsPlanning
+            
+            if ($needsPlanning -and $stats.Total -eq 0) {
+                $statusMsg = "New session - planning then building"
+            } elseif ($needsPlanning) {
+                $statusMsg = "All tasks complete - re-planning then building"
+            } else {
+                $statusMsg = "$($stats.Pending) pending tasks ready to build"
+            }
+            
+            Write-Host ""
+            Write-Host "  $statusMsg" -ForegroundColor Cyan
+            Write-Host ""
+            
+            $guidanceChoice = Show-ArrowChoice -Title "Additional guidance for this session?" -Choices @(
+                @{ Label = "Continue"; Value = "start"; Hotkey = "1"; Default = $true }
+                @{ Label = "Add guidance (extra instructions for AI)"; Value = "guide"; Hotkey = "2" }
+                @{ Label = "Return to menu"; Value = "menu"; Hotkey = "3" }
+            )
+            
+            switch ($guidanceChoice) {
+                'guide' {
+                    Write-Host ""
+                    Write-Host "  Enter your guidance (press Enter on empty line to finish):" -ForegroundColor Cyan
+                    Write-Host "  (e.g., 'verify visually with playwright', 'use API key X for testing')" -ForegroundColor DarkGray
+                    Write-Host ""
+                    $lines = @()
+                    while ($true) {
+                        $line = Read-Host "  "
+                        if ([string]::IsNullOrWhiteSpace($line) -and $lines.Count -gt 0) { break }
+                        if (-not [string]::IsNullOrWhiteSpace($line)) {
+                            $lines += $line
+                        }
+                    }
+                    if ($lines.Count -gt 0) {
+                        $script:SessionGuidance = $lines -join "`n"
+                        Write-Ralph "Guidance saved - will be included in all prompts" -Type success
+                    }
+                }
+                'menu' {
+                    Start-RalphLoop
+                    return
+                }
+            }
+            
+            if ($needsPlanning) {
                 $stats = Get-TaskStats
                 if ($stats.Total -eq 0) {
                     Write-Ralph "No existing plan. Running planning phase..." -Type info
