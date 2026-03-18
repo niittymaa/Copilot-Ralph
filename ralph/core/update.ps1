@@ -231,33 +231,27 @@ function Test-RalphUpdateAvailable {
         return $result
     }
     
-    # Compare ralph/ folder specifically by comparing tree hashes, not commit history
-    # This correctly detects actual file changes, even when git histories differ
+    # Compare ralph/ folder: working tree vs upstream
+    # Uses working tree (not HEAD) so updates are detected as "applied" immediately
     try {
-        # Get the tree object hash for ralph/ folder in both commits
-        $localTreeHash = git -C $ProjectRoot rev-parse HEAD:ralph 2>$null
-        $remoteTreeHash = git -C $ProjectRoot rev-parse "ralph-upstream/$upstreamBranch:ralph" 2>$null
+        # Primary: compare working tree against upstream ralph/ folder
+        # This correctly handles both pre-update (shows diff) and post-update (no diff)
+        $diffOutput = git -C $ProjectRoot diff --name-only "ralph-upstream/${upstreamBranch}" -- ralph/ 2>$null
         
-        # If tree hashes match, folders are identical - no updates needed
-        if ($localTreeHash -and $remoteTreeHash -and $localTreeHash -eq $remoteTreeHash) {
-            $result.Available = $false
-            return $result
-        }
-        
-        # Trees differ - get the list of changed files
-        if ($localTreeHash -and $remoteTreeHash) {
-            $diffOutput = git -C $ProjectRoot diff-tree --name-only -r $localTreeHash $remoteTreeHash 2>$null
-            if ($diffOutput) {
-                # Prepend 'ralph/' to each file path
-                $result.ChangedFiles = @($diffOutput -split "`n" | Where-Object { $_ -match '\S' } | ForEach-Object { "ralph/$_" })
-                $result.Available = $result.ChangedFiles.Count -gt 0
-            }
-        } else {
-            # Fallback to regular diff if tree comparison fails
-            $diffOutput = git -C $ProjectRoot diff --name-only HEAD "ralph-upstream/$upstreamBranch" -- ralph/ 2>$null
-            if ($diffOutput) {
-                $result.ChangedFiles = @($diffOutput -split "`n" | Where-Object { $_ -match '\S' })
-                $result.Available = $result.ChangedFiles.Count -gt 0
+        if ($LASTEXITCODE -eq 0 -and $diffOutput) {
+            $result.ChangedFiles = @($diffOutput -split "`n" | Where-Object { $_ -match '\S' })
+            $result.Available = $result.ChangedFiles.Count -gt 0
+        } elseif ($LASTEXITCODE -ne 0) {
+            # Fallback: tree hash comparison (works when ralph/ isn't in working tree)
+            $localTreeHash = git -C $ProjectRoot rev-parse HEAD:ralph 2>$null
+            $remoteTreeHash = git -C $ProjectRoot rev-parse "ralph-upstream/${upstreamBranch}:ralph" 2>$null
+            
+            if ($localTreeHash -and $remoteTreeHash -and $localTreeHash -ne $remoteTreeHash) {
+                $treeDiff = git -C $ProjectRoot diff-tree --name-only -r $localTreeHash $remoteTreeHash 2>$null
+                if ($treeDiff) {
+                    $result.ChangedFiles = @($treeDiff -split "`n" | Where-Object { $_ -match '\S' } | ForEach-Object { "ralph/$_" })
+                    $result.Available = $result.ChangedFiles.Count -gt 0
+                }
             }
         }
         
