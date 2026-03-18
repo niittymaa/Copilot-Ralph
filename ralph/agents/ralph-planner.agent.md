@@ -127,7 +127,14 @@ If reference materials are provided in your prompt, analyze them THOROUGHLY:
 
 ## Phase 4: Create/Update Plan
 
-Create or update the IMPLEMENTATION_PLAN.md in the appropriate location:
+**IMPORTANT: Check the prompt for an explicit output file path.** Ralph injects the exact path where you must write the plan. Look for a section titled "CRITICAL: OUTPUT FILE LOCATION" - if present, use that exact path.
+
+If no explicit path is provided, determine the path yourself:
+- Read `.ralph/active-task` to get the task ID
+- If task ID exists: write to `.ralph/tasks/<task-id>/IMPLEMENTATION_PLAN.md`
+- If no task ID: write to `IMPLEMENTATION_PLAN.md` at project root
+
+Create or update the plan using this format:
 
 ```markdown
 # Implementation Plan
@@ -242,9 +249,17 @@ When planning tasks, respect the existing project structure:
 ## Output
 
 When planning is complete, verify your work:
-1. Run `cat IMPLEMENTATION_PLAN.md` to confirm the plan was written
-2. Check the file exists with `ls` if in `.ralph/` (gitignored location)
-3. If the plan is at project root, `git status` will show it
+1. Run `cat <plan-file-path>` to confirm the plan was written (use the exact path from the prompt, or the path you determined in Phase 4)
+2. Verify the file contains `- [ ]` checkbox tasks (this exact format is required for Ralph to detect tasks)
+3. Count the tasks to confirm they were written
+
+### Task Format Requirements
+
+Ralph counts tasks by matching checkbox patterns. You MUST use this exact format:
+- Pending tasks: `- [ ] Task description` (dash, space, open bracket, space, close bracket)
+- Completed tasks: `- [x] Completed task` (dash, space, open bracket, x, close bracket)
+
+**Do NOT use:** `* [ ]`, `- []`, `+ [ ]`, or any other variation.
 
 ### Git Mode Awareness
 

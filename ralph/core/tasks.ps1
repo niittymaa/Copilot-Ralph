@@ -430,8 +430,8 @@ function Get-TaskStatsFromFile {
     }
     
     $content = Get-Content $PlanFile -Raw
-    $pending = ([regex]::Matches($content, '- \[ \]')).Count
-    $completed = ([regex]::Matches($content, '- \[x\]')).Count
+    $pending = ([regex]::Matches($content, '^\s*-\s*\[\s*\]', [System.Text.RegularExpressions.RegexOptions]::Multiline)).Count
+    $completed = ([regex]::Matches($content, '^\s*-\s*\[x\]', [System.Text.RegularExpressions.RegexOptions]::Multiline)).Count
     
     return @{
         Total     = $pending + $completed

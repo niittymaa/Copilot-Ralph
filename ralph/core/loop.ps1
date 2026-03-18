@@ -470,8 +470,8 @@ function Get-TaskStats {
     }
     
     $content = Get-Content $PlanFile -Raw
-    $pending = ([regex]::Matches($content, '- \[ \]')).Count
-    $completed = ([regex]::Matches($content, '- \[x\]')).Count
+    $pending = ([regex]::Matches($content, '^\s*-\s*\[\s*\]', [System.Text.RegularExpressions.RegexOptions]::Multiline)).Count
+    $completed = ([regex]::Matches($content, '^\s*-\s*\[x\]', [System.Text.RegularExpressions.RegexOptions]::Multiline)).Count
     
     return @{
         Total     = $pending + $completed
@@ -2378,6 +2378,49 @@ Don't treat mockups as optional - they define the expected outcome.
     
     Write-Ralph "Analyzing specs and creating implementation plan..." -Type info
     
+    # Inject explicit plan file path into the prompt so the AI writes to the correct location
+    if ($PlanFile) {
+        $planDir = Split-Path -Parent $PlanFile
+        $agentPrompt = $agentPrompt + @"
+
+## CRITICAL: OUTPUT FILE LOCATION
+
+You MUST write the implementation plan to this EXACT file path:
+``````
+$PlanFile
+``````
+
+The directory for this file is: `$planDir`
+If the directory does not exist, create it first.
+
+**DO NOT** write IMPLEMENTATION_PLAN.md to the project root or any other location.
+The plan file MUST be at the exact path above for Ralph to detect your tasks.
+
+"@
+    }
+    
+    # If re-planning (existing plan with all tasks done), inject context about completed work
+    if ($PlanFile -and (Test-Path $PlanFile)) {
+        $existingStats = Get-TaskStats
+        if ($existingStats.Total -gt 0 -and $existingStats.Pending -eq 0) {
+            $agentPrompt = $agentPrompt + @"
+
+## RE-PLANNING MODE: All previous tasks are complete
+
+This session already has a completed plan with $($existingStats.Completed) finished tasks.
+You are being asked to find NEW work - improvements, missing features, bugs, or polish.
+
+**Instructions for re-planning:**
+1. Read the existing IMPLEMENTATION_PLAN.md to see what was already done
+2. Analyze the current codebase to find gaps, improvements, or new requirements
+3. Keep all existing `- [x]` completed tasks in the plan (do NOT remove them)
+4. Add NEW `- [ ]` tasks for additional work needed
+5. Focus on: code quality, missing features, tests, documentation, UX improvements
+
+"@
+        }
+    }
+    
     # Save checkpoint before planning
     if (Get-Command Save-PhaseCheckpoint -ErrorAction SilentlyContinue) {
         Save-PhaseCheckpoint -Phase 'planning'
@@ -2450,13 +2493,51 @@ Don't treat mockups as optional - they define the expected outcome.
             Write-LogPlan -Action COMPLETED -TaskCount $stats.Pending
         }
         return $true
-    } else {
-        Write-Ralph "No tasks created. Check ralph/specs/ for valid specifications." -Type warning
-        if (Get-Command Write-LogPlan -ErrorAction SilentlyContinue) {
-            Write-LogPlan -Action COMPLETED -TaskCount 0 -Details "No tasks created"
-        }
-        return $false
     }
+    
+    # Plan file recovery: AI may have written the plan to the wrong location
+    if ($PlanFile) {
+        $recovered = $false
+        $searchLocations = @(
+            (Join-Path $script:ProjectRoot 'IMPLEMENTATION_PLAN.md'),
+            (Join-Path $script:RalphDir 'IMPLEMENTATION_PLAN.md')
+        )
+        
+        foreach ($candidatePath in $searchLocations) {
+            if ($candidatePath -ne $PlanFile -and (Test-Path $candidatePath)) {
+                $candidateContent = Get-Content $candidatePath -Raw
+                $candidatePending = ([regex]::Matches($candidateContent, '^\s*-\s*\[\s*\]', [System.Text.RegularExpressions.RegexOptions]::Multiline)).Count
+                
+                if ($candidatePending -gt 0) {
+                    Write-Ralph "Found plan with $candidatePending tasks at $candidatePath - relocating..." -Type warning
+                    $planDir = Split-Path -Parent $PlanFile
+                    if (-not (Test-Path $planDir)) {
+                        New-Item -ItemType Directory -Path $planDir -Force | Out-Null
+                    }
+                    Move-Item -Path $candidatePath -Destination $PlanFile -Force
+                    $recovered = $true
+                    break
+                }
+            }
+        }
+        
+        if ($recovered) {
+            $stats = Get-TaskStats
+            if ($stats.Pending -gt 0) {
+                Write-Ralph "Recovered $($stats.Pending) tasks from misplaced plan file" -Type success
+                if (Get-Command Write-LogPlan -ErrorAction SilentlyContinue) {
+                    Write-LogPlan -Action COMPLETED -TaskCount $stats.Pending -Details "Recovered from wrong location"
+                }
+                return $true
+            }
+        }
+    }
+    
+    Write-Ralph "No tasks created. Check specs configuration for valid specifications." -Type warning
+    if (Get-Command Write-LogPlan -ErrorAction SilentlyContinue) {
+        Write-LogPlan -Action COMPLETED -TaskCount 0 -Details "No tasks created"
+    }
+    return $false
 }
 
 # ═══════════════════════════════════════════════════════════════
@@ -3385,8 +3466,36 @@ function Start-RalphLoop {
                     return
                 }
                 if (-not $planResult) {
-                    Write-Ralph "Planning did not create tasks. Nothing to build." -Type warning
-                    return
+                    # Planning failed to create tasks - offer retry instead of silently exiting
+                    Write-Ralph "Planning did not create tasks." -Type warning
+                    Write-Host ""
+                    
+                    $retryChoice = Show-ArrowChoice -Title "Planning produced no tasks" -Choices @(
+                        @{ Label = "Retry planning"; Value = "retry"; Hotkey = "1"; Default = $true }
+                        @{ Label = "Return to session settings"; Value = "settings"; Hotkey = "2" }
+                        @{ Label = "Return to home"; Value = "home"; Hotkey = "3" }
+                    )
+                    
+                    switch ($retryChoice) {
+                        'retry' {
+                            $planResult = Invoke-Planning
+                            if ($planResult -is [hashtable] -and $planResult.ContainsKey('Cancelled') -and $planResult.Cancelled) {
+                                Start-RalphLoop
+                                return
+                            }
+                            if (-not $planResult) {
+                                Write-Ralph "Planning still produced no tasks. Check your specs." -Type warning
+                                return
+                            }
+                        }
+                        'settings' {
+                            Start-RalphLoop
+                            return
+                        }
+                        default {
+                            return
+                        }
+                    }
                 }
             }
             
