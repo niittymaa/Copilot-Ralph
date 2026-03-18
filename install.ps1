@@ -229,6 +229,51 @@ function Show-AffectedFiles {
     Write-Host ""
 }
 
+function Remove-DirectoryForce {
+    <#
+    .SYNOPSIS
+        Forcefully removes a directory, handling file locks from the current process.
+    #>
+    param([string]$Path)
+    
+    if (-not (Test-Path $Path)) { return $true }
+    
+    # Attempt 1: standard removal
+    try {
+        Remove-Item -Recurse -Force $Path -ErrorAction Stop
+        return $true
+    } catch { }
+    
+    # Attempt 2: cmd.exe rmdir (bypasses PowerShell file handles)
+    try {
+        $out = cmd.exe /c "rmdir /s /q `"$Path`"" 2>&1
+        if (-not (Test-Path $Path)) { return $true }
+    } catch { }
+    
+    # Attempt 3: rename first, then delete (breaks locks on the original path)
+    try {
+        $tempName = "$Path-removing-$([guid]::NewGuid().ToString('N').Substring(0,6))"
+        [System.IO.Directory]::Move($Path, $tempName)
+        Remove-Item -Recurse -Force $tempName -ErrorAction SilentlyContinue
+        # Schedule cleanup on next run if still present
+        if (Test-Path $tempName) {
+            cmd.exe /c "rmdir /s /q `"$tempName`"" 2>$null
+        }
+        return $true
+    } catch { }
+    
+    # Attempt 4: delete contents individually, skip locked files
+    try {
+        Get-ChildItem -Path $Path -Recurse -Force | Sort-Object { $_.FullName.Length } -Descending | ForEach-Object {
+            Remove-Item -Force $_.FullName -ErrorAction SilentlyContinue
+        }
+        Remove-Item -Recurse -Force $Path -ErrorAction SilentlyContinue
+        if (-not (Test-Path $Path)) { return $true }
+    } catch { }
+    
+    return $false
+}
+
 function Remove-RalphFiles {
     <#
     .SYNOPSIS
@@ -240,17 +285,24 @@ function Remove-RalphFiles {
     param([switch]$IncludeRalphData)
 
     $removed = @()
+    $failed = @()
 
     # ralph/ folder (framework)
     if (Test-Path $RalphDir) {
-        Remove-Item -Recurse -Force $RalphDir
-        $removed += "ralph/"
+        if (Remove-DirectoryForce -Path $RalphDir) {
+            $removed += "ralph/"
+        } else {
+            $failed += "ralph/"
+        }
     }
 
     # .ralph/ folder (runtime: sessions, memory, venv, logs, caches)
     if ($IncludeRalphData -and (Test-Path $RalphDataDir)) {
-        Remove-Item -Recurse -Force $RalphDataDir
-        $removed += ".ralph/"
+        if (Remove-DirectoryForce -Path $RalphDataDir) {
+            $removed += ".ralph/"
+        } else {
+            $failed += ".ralph/"
+        }
     }
 
     # .github/agents/ - only Ralph agent files
@@ -278,6 +330,12 @@ function Remove-RalphFiles {
             Remove-Item -Force $AgentsMdPath
             $removed += "AGENTS.md"
         }
+    }
+
+    if ($failed.Count -gt 0) {
+        Write-Host ""
+        Write-Host "  Warning: Could not remove: $($failed -join ', ')" -ForegroundColor Yellow
+        Write-Host "  Close all PowerShell windows that ran Ralph, then retry." -ForegroundColor Yellow
     }
 
     return $removed
